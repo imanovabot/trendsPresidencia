@@ -1,0 +1,27 @@
+=== RUTAS DE LA API ===
+['GET', 'HEAD'] /openapi.json
+['GET', 'HEAD'] /api/docs
+['GET', 'HEAD'] /docs/oauth2-redirect
+['GET', 'HEAD'] /api/redoc
+['GET'] /api/ima/health
+['GET'] /api/ima/agents
+['GET'] /api/ima/workflows
+['GET'] /api/ima/projects
+['GET'] /api/github/projects
+['GET'] /api/github/issues
+['GET'] /api/github/issues/{issue_number}
+['GET'] /api/email/envelopes
+['GET'] /api/email/messages/{uid}
+['GET'] /api/email/folders
+['GET'] /api/email/search
+['GET'] /api/transcription/files
+['GET'] /api/transcription/content/{filename}
+['GET'] /api/transcription/pending
+['GET'] /api/calendar/upcoming
+['GET'] /api/calendar/recent
+['GET'] /api/calendar/all
+['GET'] /api/dashboard/summary
+['GET'] /api/dashboard/recent-activity
+['GET'] /
+['GET'] /health
+Total rutas API: 25
