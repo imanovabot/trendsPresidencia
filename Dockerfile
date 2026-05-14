@@ -2,7 +2,7 @@
 FROM nginx:alpine AS base
 
 # Instalar Python y dependencias del sistema
-RUN apk add --no-cache python3 py3-pip gcc libpq-dev musl-dev
+RUN apk add --no-cache python3 py3-pip gcc libpq-dev musl-dev bash wget
 
 # Crear directorio de trabajo para la app
 WORKDIR /app
