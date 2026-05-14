@@ -1,0 +1,118 @@
+{
+  "project": "trendsPresidencia",
+  "version": "0.1.0",
+  "last_updated": "2026-05-13T00:00:00Z",
+  "candidates": [
+    {
+      "id": "abelardo",
+      "name": "Abelardo de la Espriella",
+      "party": "Partido Conservador",
+      "momentum": 33.0,
+      "change_24h": 2.5,
+      "sources": {
+        "google_trends": 100,
+        "youtube": 45,
+        "sentiment": 29.2
+      },
+      "sentiment_breakdown": {
+        "positive": 65,
+        "neutral": 20,
+        "negative": 15
+      },
+      "top_news": [
+        "Proceso judicial en su contra genera aumento en búsquedas",
+        "Adhesiones políticas incrementan visibilidad"
+      ],
+      "description": "Líder actual con alto volumen de búsquedas y sentimiento positivo neto.",
+      "color": "#8b5cf6"
+    },
+    {
+      "id": "ivan-cepeda",
+      "name": "Iván Cepeda",
+      "party": "Polo Democrático",
+      "momentum": 26.8,
+      "change_24h": -0.8,
+      "sources": {
+        "google_trends": 35,
+        "youtube": 97,
+        "sentiment": 42.0
+      },
+      "sentiment_breakdown": {
+        "positive": 58,
+        "neutral": 25,
+        "negative": 17
+      },
+      "top_news": [
+        "Investigación del CNE genera conversación",
+        "Anuncio de adhesión política mantiene engagement"
+      ],
+      "description": "Fuerte en YouTube con comunidad activa consuming contenido.",
+      "color": "#3b82f6"
+    },
+    {
+      "id": "paloma-valencia",
+      "name": "Paloma Valencia",
+      "party": "Centro Democrático",
+      "momentum": 22.8,
+      "change_24h": -1.9,
+      "sources": {
+        "google_trends": 28,
+        "youtube": 65,
+        "sentiment": 16.0
+      },
+      "sentiment_breakdown": {
+        "positive": 35,
+        "neutral": 30,
+        "negative": 35
+      },
+      "top_news": [
+        "Noticias recientes afectan percepción digital",
+        "Caída en búsquedas directas en Google"
+      ],
+      "description": "Momentum en declive con sentimiento digital más bajo.",
+      "color": "#ef4444"
+    },
+    {
+      "id": "sergio-fajardo",
+      "name": "Sergio Fajardo",
+      "party": "Partido Verde",
+      "momentum": 17.4,
+      "change_24h": 0.5,
+      "sources": {
+        "google_trends": 9,
+        "youtube": 100,
+        "sentiment": 38.0
+      },
+      "sentiment_breakdown": {
+        "positive": 52,
+        "neutral": 28,
+        "negative": 20
+      },
+      "top_news": [
+        "Alto engagement en YouTube pero bajo en búsquedas directas",
+        "Posicionamiento como alternativa de centro"
+      ],
+      "description": "Fuerte en YouTube pero con baja visibilidad en búsquedas.",
+      "color": "#10b981"
+    }
+  ],
+  "categories": [
+    "Todos",
+    "Trending",
+    "Alza",
+    "Baja",
+    "Estable"
+  ],
+  "weights": {
+    "google_trends": 0.40,
+    "youtube": 0.30,
+    "sentiment": 0.30
+  },
+  "update_frequency_hours": 6,
+  "data_sources": {
+    "google_trends": "pytrends library (unofficial API)",
+    "youtube": "YouTube Data API v3",
+    "sentiment": "HuggingFace model (cardiffnlp/twitter-roberta-base-sentiment)",
+    "news": "RSS feeds from Colombian media"
+  }
+}

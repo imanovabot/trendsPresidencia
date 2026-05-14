@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: trends-presidencia
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "8001:8001"
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+      - YOUTUBE_API_KEY=${YOUTUBE_API_KEY:-}
+      - HUGGINGFACE_API_KEY=${HUGGINGFACE_API_KEY:-}
+      - PYTRENDS_LANGUAGE=${PYTRENDS_LANGUAGE:-es-CO}
+      - PYTRENDS_REGION=${PYTRENDS_REGION:-CO}
+      - CACHE_TTL_SECONDS=${CACHE_TTL_SECONDS:-21600}
+      - NEWS_UPDATE_INTERVAL_MINUTES=${NEWS_UPDATE_INTERVAL_MINUTES:-30}
+      - TIKTOK_API_KEY=${TIKTOK_API_KEY:-}
+      - X_API_KEY=${X_API_KEY:-}
+      - INSTAGRAM_API_KEY=${INSTAGRAM_API_KEY:-}
+    volumes:
+      - ./data:/app/data:ro
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
