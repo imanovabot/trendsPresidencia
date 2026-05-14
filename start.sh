@@ -1,8 +1,8 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 
 # Iniciar backend en background
-cd /app/backend
+cd /app
 uvicorn main:app --host 0.0.0.0 --port 8001 --log-level info &
 BACKEND_PID=$!
 
