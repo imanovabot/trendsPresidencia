@@ -20,6 +20,8 @@ services:
       - TIKTOK_API_KEY=${TIKTOK_API_KEY:-}
       - X_API_KEY=${X_API_KEY:-}
       - INSTAGRAM_API_KEY=${INSTAGRAM_API_KEY:-}
+      - AUTO_REFRESH_ENABLED=${AUTO_REFRESH_ENABLED:-true}
+      - AUTO_REFRESH_INTERVAL_MINUTES=${AUTO_REFRESH_INTERVAL_MINUTES:-30}
     volumes:
       - ./data:/app/data:ro
     healthcheck:

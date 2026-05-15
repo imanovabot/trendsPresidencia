@@ -9,7 +9,7 @@ WORKDIR /app
 
 # Copiar requirements del backend
 COPY backend/requirements.txt .
-RUN pip3 install --no-cache-dir --break-system-packages -r requirements.txt
+RUN pip3 install --no-cache-dir --user -r requirements.txt
 
 # Copiar código del backend
 COPY backend/ .

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>trendsPresidencia — Momentum Digital Colombia 2026</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>" />
+    <link rel="stylesheet" href="src/styles.css" />
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="logo">
+                    <span class="logo-icon">📊</span>
+                    trendsPresidencia
+                </h1>
+                <p class="tagline">Momentum digital de candidatos presidenciales — Colombia 2026</p>
+                <p class="disclaimer">
+                    ⚠️ <strong>NO es una encuesta de intención de voto</strong> — Mide visibilidad en el ecosistema digital (Google Trends 40% + YouTube 30% + Sentimiento 30%)
+                </p>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Controls -->
+            <section class="controls">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Buscar candidato..." aria-label="Buscar candidato" />
+                    <span class="search-icon">🔍</span>
+                </div>
+                <div class="filters">
+                    <label for="categoryFilter">Categoría:</label>
+                    <select id="categoryFilter">
+                        <!-- Opciones generadas dinámicamente -->
+                    </select>
+                </div>
+                <div class="stats" id="resultStats">Mostrando 0 candidatos</div>
+                <button id="refreshBtn" class="refresh-btn" title="Actualizar datos desde APIs">
+                    🔄 Refrescar
+                </button>
+            </section>
+
+            <!-- Dashboard Grid -->
+            <div class="dashboard-grid">
+                <!-- Left: Candidate List -->
+                <section class="candidate-list" id="candidateList">
+                    <!-- Candidatos renderizados dinámicamente -->
+                </section>
+
+                <!-- Right: Detail Panel -->
+                <aside class="detail-panel" id="detailPanel">
+                    <div class="empty-state" id="emptyState">
+                        <div class="empty-icon">👈</div>
+                        <h3>Selecciona un candidato</h3>
+                        <p>Haz clic en cualquier candidato de la lista para ver su desglose detallado de métricas y noticias relacionadas.</p>
+                    </div>
+                    <div class="candidate-detail" id="candidateDetail" style="display: none;">
+                        <!-- Detalle renderizado dinámicamente -->
+                    </div>
+                </aside>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>
+                Datos actualizados cada <strong id="updateFreq">6</strong> horas |
+                Metodología: <a href="#methodology" id="methodologyLink">Ver explicación</a>
+            </p>
+            <p class="copyright">© 2026 trendsPresidencia — Solo lectura, sin fines electorales</p>
+        </footer>
+
+        <!-- Methodology Modal (hidden by default) -->
+        <dialog id="methodologyModal" class="modal">
+            <div class="modal-content">
+                <h2>Metodología de Cálculo</h2>
+                <div class="methodology-box">
+                    <h3>El "Mix" de Momentum</h3>
+                    <p>El porcentaje de relevancia se calcula como un promedio ponderado de tres fuentes:</p>
+                    <ul>
+                        <li><strong>Google Trends (40%)</strong>: Volumen de búsquedas. Mide curiosidad/interés de la población.</li>
+                        <li><strong>YouTube (30%)</strong>: Visualizaciones, likes y shares de videos relacionados.</li>
+                        <li><strong>Sentimiento (30%)</strong>: IA analiza comentarios en redes (positivo/negativo/neutro).</li>
+                    </ul>
+                    <h3>Escala</h3>
+                    <p>Cada fuente se normaliza a una escala 0-100 antes de ponderar. El resultado final es un porcentaje de visibilidad relativa entre candidatos.</p>
+                </div>
+                <button class="close-btn" id="closeModal">Cerrar</button>
+            </div>
+        </dialog>
+    </div>
+
+    <!-- Scripts -->
+    <script src="src/app.js"></script>
+</body>
+</html>
