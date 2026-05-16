@@ -35,9 +35,9 @@ ENV AUTO_REFRESH_INTERVAL_MINUTES=20
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:8001/health || exit 1
 
-# Usuario no-root
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-USER appuser
+# Usuario no-root (comentado para evitar problemas de permisos en nginx)
+# RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+# USER appuser
 
 # Iniciar aplicación
 CMD ["/usr/local/bin/start.sh"]
