@@ -27,6 +27,10 @@ RUN chmod +x /usr/local/bin/start.sh
 # Exponer puertos
 EXPOSE 80 8001
 
+# Configuración de auto-refresh
+ENV AUTO_REFRESH_ENABLED=true
+ENV AUTO_REFRESH_INTERVAL_MINUTES=20
+
 # Healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:8001/health || exit 1
