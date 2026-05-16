@@ -9,7 +9,7 @@ WORKDIR /app
 
 # Copiar requirements del backend
 COPY backend/requirements.txt .
-RUN pip3 install --no-cache-dir --user -r requirements.txt
+RUN pip3 install --no-cache-dir --break-system-packages -r requirements.txt
 
 # Copiar código del backend
 COPY backend/ .
@@ -33,7 +33,6 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
 
 # Usuario no-root
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-USER appuser
 
 # Iniciar aplicación
 CMD ["/usr/local/bin/start.sh"]

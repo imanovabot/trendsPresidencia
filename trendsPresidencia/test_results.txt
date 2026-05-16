@@ -1,0 +1,186 @@
+Exit code: 1
+============================= test session starts ==============================
+platform linux -- Python 3.13.5, pytest-9.0.3, pluggy-1.6.0 -- /opt/data/skills/trading-signal-skill/venv/bin/python
+cachedir: .pytest_cache
+rootdir: /workspace/trendsPresidencia/tests
+configfile: pytest.ini
+plugins: playwright-0.7.2, anyio-4.13.0, base-url-2.1.0
+collecting ... collected 7 items
+
+tests/test_frontend.py::TestFrontend::test_page_loads ERROR              [ 14%]
+tests/test_frontend.py::TestFrontend::test_candidates_visible ERROR      [ 28%]
+tests/test_frontend.py::TestFrontend::test_search_works ERROR            [ 42%]
+tests/test_frontend.py::TestFrontend::test_category_filter ERROR         [ 57%]
+tests/test_frontend.py::TestFrontend::test_modal_opens ERROR             [ 71%]
+tests/test_frontend.py::TestFrontend::test_modal_closes ERROR            [ 85%]
+tests/test_frontend.py::TestFrontend::test_candidate_detail ERROR        [100%]
+
+==================================== ERRORS ====================================
+________________ ERROR at setup of TestFrontend.test_page_loads ________________
+tests/conftest.py:14: in browser
+    browser = p.chromium.launch(headless=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/data/skills/trading-signal-skill/venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:15118: in launch
+    self._sync(
+/opt/data/skills/trading-signal-skill/venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:98: in launch
+    await self._channel.send(
+/opt/data/skills/trading-signal-skill/venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+/opt/data/skills/trading-signal-skill/venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E   playwright._impl._errors.Error: BrowserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1217/chrome-headless-shell-linux64/chrome-headless-shell
+E   ╔════════════════════════════════════════════════════════════╗
+E   ║ Looks like Playwright was just installed or updated.       ║
+E   ║ Please run the following command to download new browsers: ║
+E   ║                                                            ║
+E   ║     playwright install                                     ║
+E   ║                                                            ║
+E   ║ <3 Playwright Team                                         ║
+E   ╚════════════════════════════════════════════════════════════╝
+____________ ERROR at setup of TestFrontend.test_candidates_visible ____________
+tests/conftest.py:14: in browser
+    browser = p.chromium.launch(headless=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/data/skills/trading-signal-skill/venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:15118: in launch
+    self._sync(
+/opt/data/skills/trading-signal-skill/venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:98: in launch
+    await self._channel.send(
+/opt/data/skills/trading-signal-skill/venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+/opt/data/skills/trading-signal-skill/venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E   playwright._impl._errors.Error: BrowserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1217/chrome-headless-shell-linux64/chrome-headless-shell
+E   ╔════════════════════════════════════════════════════════════╗
+E   ║ Looks like Playwright was just installed or updated.       ║
+E   ║ Please run the following command to download new browsers: ║
+E   ║                                                            ║
+E   ║     playwright install                                     ║
+E   ║                                                            ║
+E   ║ <3 Playwright Team                                         ║
+E   ╚════════════════════════════════════════════════════════════╝
+_______________ ERROR at setup of TestFrontend.test_search_works _______________
+tests/conftest.py:14: in browser
+    browser = p.chromium.launch(headless=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/data/skills/trading-signal-skill/venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:15118: in launch
+    self._sync(
+/opt/data/skills/trading-signal-skill/venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:98: in launch
+    await self._channel.send(
+/opt/data/skills/trading-signal-skill/venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+/opt/data/skills/trading-signal-skill/venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E   playwright._impl._errors.Error: BrowserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1217/chrome-headless-shell-linux64/chrome-headless-shell
+E   ╔════════════════════════════════════════════════════════════╗
+E   ║ Looks like Playwright was just installed or updated.       ║
+E   ║ Please run the following command to download new browsers: ║
+E   ║                                                            ║
+E   ║     playwright install                                     ║
+E   ║                                                            ║
+E   ║ <3 Playwright Team                                         ║
+E   ╚════════════════════════════════════════════════════════════╝
+_____________ ERROR at setup of TestFrontend.test_category_filter ______________
+tests/conftest.py:14: in browser
+    browser = p.chromium.launch(headless=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/data/skills/trading-signal-skill/venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:15118: in launch
+    self._sync(
+/opt/data/skills/trading-signal-skill/venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:98: in launch
+    await self._channel.send(
+/opt/data/skills/trading-signal-skill/venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+/opt/data/skills/trading-signal-skill/venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E   playwright._impl._errors.Error: BrowserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1217/chrome-headless-shell-linux64/chrome-headless-shell
+E   ╔════════════════════════════════════════════════════════════╗
+E   ║ Looks like Playwright was just installed or updated.       ║
+E   ║ Please run the following command to download new browsers: ║
+E   ║                                                            ║
+E   ║     playwright install                                     ║
+E   ║                                                            ║
+E   ║ <3 Playwright Team                                         ║
+E   ╚════════════════════════════════════════════════════════════╝
+_______________ ERROR at setup of TestFrontend.test_modal_opens ________________
+tests/conftest.py:14: in browser
+    browser = p.chromium.launch(headless=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/data/skills/trading-signal-skill/venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:15118: in launch
+    self._sync(
+/opt/data/skills/trading-signal-skill/venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:98: in launch
+    await self._channel.send(
+/opt/data/skills/trading-signal-skill/venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+/opt/data/skills/trading-signal-skill/venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E   playwright._impl._errors.Error: BrowserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1217/chrome-headless-shell-linux64/chrome-headless-shell
+E   ╔════════════════════════════════════════════════════════════╗
+E   ║ Looks like Playwright was just installed or updated.       ║
+E   ║ Please run the following command to download new browsers: ║
+E   ║                                                            ║
+E   ║     playwright install                                     ║
+E   ║                                                            ║
+E   ║ <3 Playwright Team                                         ║
+E   ╚════════════════════════════════════════════════════════════╝
+_______________ ERROR at setup of TestFrontend.test_modal_closes _______________
+tests/conftest.py:14: in browser
+    browser = p.chromium.launch(headless=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/data/skills/trading-signal-skill/venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:15118: in launch
+    self._sync(
+/opt/data/skills/trading-signal-skill/venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:98: in launch
+    await self._channel.send(
+/opt/data/skills/trading-signal-skill/venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+/opt/data/skills/trading-signal-skill/venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E   playwright._impl._errors.Error: BrowserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1217/chrome-headless-shell-linux64/chrome-headless-shell
+E   ╔════════════════════════════════════════════════════════════╗
+E   ║ Looks like Playwright was just installed or updated.       ║
+E   ║ Please run the following command to download new browsers: ║
+E   ║                                                            ║
+E   ║     playwright install                                     ║
+E   ║                                                            ║
+E   ║ <3 Playwright Team                                         ║
+E   ╚════════════════════════════════════════════════════════════╝
+_____________ ERROR at setup of TestFrontend.test_candidate_detail _____________
+tests/conftest.py:14: in browser
+    browser = p.chromium.launch(headless=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/data/skills/trading-signal-skill/venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:15118: in launch
+    self._sync(
+/opt/data/skills/trading-signal-skill/venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:98: in launch
+    await self._channel.send(
+/opt/data/skills/trading-signal-skill/venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+/opt/data/skills/trading-signal-skill/venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E   playwright._impl._errors.Error: BrowserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1217/chrome-headless-shell-linux64/chrome-headless-shell
+E   ╔════════════════════════════════════════════════════════════╗
+E   ║ Looks like Playwright was just installed or updated.       ║
+E   ║ Please run the following command to download new browsers: ║
+E   ║                                                            ║
+E   ║     playwright install                                     ║
+E   ║                                                            ║
+E   ║ <3 Playwright Team                                         ║
+E   ╚════════════════════════════════════════════════════════════╝
+=============================== warnings summary ===============================
+../../opt/data/skills/trading-signal-skill/venv/lib/python3.13/site-packages/_pytest/config/__init__.py:1434
+  /opt/data/skills/trading-signal-skill/venv/lib/python3.13/site-packages/_pytest/config/__init__.py:1434: PytestConfigWarning: Unknown config option: asyncio_mode
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+../../opt/data/skills/trading-signal-skill/venv/lib/python3.13/site-packages/_pytest/config/__init__.py:1434
+  /opt/data/skills/trading-signal-skill/venv/lib/python3.13/site-packages/_pytest/config/__init__.py:1434: PytestConfigWarning: Unknown config option: playwright_browser
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+ERROR tests/test_frontend.py::TestFrontend::test_page_loads - playwright._imp...
+ERROR tests/test_frontend.py::TestFrontend::test_candidates_visible - playwri...
+ERROR tests/test_frontend.py::TestFrontend::test_search_works - playwright._i...
+ERROR tests/test_frontend.py::TestFrontend::test_category_filter - playwright...
+ERROR tests/test_frontend.py::TestFrontend::test_modal_opens - playwright._im...
+ERROR tests/test_frontend.py::TestFrontend::test_modal_closes - playwright._i...
+ERROR tests/test_frontend.py::TestFrontend::test_candidate_detail - playwrigh...
+======================== 2 warnings, 7 errors in 1.13s =========================

@@ -1,0 +1,25 @@
+# Arquitecto IA - Cron Job Configuration
+# Instalación: crontab /workspace/cron/arquitecto_ia.cron
+# O manualmente: (crontab -l; echo "0 6 * * * ...") | crontab -
+#
+# Este cron ejecuta el agente investigador de arquitectura cada mañana a las 6:00 AM
+# - Busca artículos en ArXiv, GitHub, Papers With Code
+# - Analiza tendencias y patrones emergentes
+# - Genera reporte Markdown y JSON
+# - Actualiza el skill 'arquitecto-ia-investigador'
+#
+# Logs: /workspace/logs/cron_arquitecto.log
+# Reportes: /workspace/knowledge_base/reporte_YYYY-MM-DD.md
+# Skill actualizado: /opt/data/skills/devops/arquitecto-ia-investigador/SKILL.md
+
+# ── Horario: 6:00 AM todos los días ────────────────────────────────────────
+0 6 * * * cd /workspace && /usr/bin/python3 /workspace/scripts/arquitecto_investigador.py >> /workspace/logs/cron_arquitecto.log 2>&1
+
+# ── (Opcional) Ejecución de respaldo a las 6:05 AM si falla la anterior ─────
+# 5 6 * * * cd /workspace && /usr/bin/python3 /workspace/scripts/arquitecto_investigador.py --retry >> /workspace/logs/cron_arquitecto_retry.log 2>&1
+
+# ── (Opcional) Limpieza semual de logs antiguos (domingo 4:00 AM) ───────────
+# 0 4 * * 0 find /workspace/logs -name "*.log" -mtime +30 -delete
+
+# ── (Opcional) Notificación a Telegram después de cada ejecución ────────────
+# 0 6 * * * cd /workspace && python3 scripts/arquitecto_investigador.py && python3 scripts/notify_telegram.py "✅ Reporte de arquitectura IA actualizado" >> /workspace/logs/cron_notify.log 2>&1

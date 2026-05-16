@@ -1,0 +1,85 @@
+{
+  "date": "2026-05-08",
+  "sources": {
+    "arxiv_count": 0,
+    "github_count": 10,
+    "papers_with_code_count": 0
+  },
+  "total_articles": 10,
+  "keywords": {
+    "LLM": 2
+  },
+  "new_frameworks": [
+    {
+      "name": "arize",
+      "first_seen": "2026-05-08",
+      "count": 1,
+      "url": "https://github.com/limi124/shanshui-mingtang-fengshui-gis"
+    }
+  ],
+  "patterns": [
+    {
+      "name": "Agentic Workflows",
+      "frequency": 2,
+      "description": "Patrón detectado en 2 artículos",
+      "keywords": [
+        "agent",
+        "orchestration",
+        "multi-agent",
+        "autonomous"
+      ]
+    }
+  ],
+  "articles": {
+    "arxiv": [],
+    "github": [
+      {
+        "source": "github",
+        "name": "iam567/LifeManga",
+        "description": "ios swift swiftui openai gpt-image manga ai-art",
+        "url": "https://github.com/iam567/LifeManga",
+        "stars": 225,
+        "language": "Swift",
+        "topics": [],
+        "created_at": "2026-05-07T10:39:09Z",
+        "pushed_at": "2026-05-07T11:27:56Z"
+      },
+      {
+        "source": "github",
+        "name": "kerlos/pordee",
+        "description": "ตอบสั้นๆ ก็เข้าใจแบบพอดีๆ",
+        "url": "https://github.com/kerlos/pordee",
+        "stars": 142,
+        "language": "JavaScript",
+        "topics": [
+          "ai",
+          "claude",
+          "claude-code-plugin",
+          "thai"
+        ],
+        "created_at": "2026-05-07T15:26:07Z",
+        "pushed_at": "2026-05-08T03:32:21Z"
+      },
+      {
+        "source": "github",
+        "name": "Outpostshewharf/Edgenuity-AI-Helper",
+        "description": "edgenuity mod menu || ai chatgpt || edgenuity ai helper || edgenuity",
+        "url": "https://github.com/Outpostshewharf/Edgenuity-AI-Helper",
+        "stars": 107,
+        "language": null,
+        "topics": [
+          "edgenuity",
+          "edgenuity-answers",
+          "edgenuity-assignment-bot",
+          "edgenuity-auto",
+          "edgenuity-bot",
+          "edgenuity-hacks"
+        ],
+        "created_at": "2026-05-07T23:51:00Z",
+        "pushed_at": "2026-05-08T00:08:49Z"
+      }
+    ],
+    "papers_with_code": []
+  },
+  "report": "# 🏛️ Reporte Diario de Arquitectura de IA\n\n**Fecha**: 2026-05-08\n**Generado por**: Arquitecto IA Investigador (automático)\n**Fuentes consultadas**: ArXiv (0), GitHub (10), Papers With Code (0)\n\n---\n\n## 📊 Resumen Ejecutivo\n\n- **Total artículos analizados**: 10\n- **Tendencias principales**: LLM\n- **Frameworks detectados**: 1\n- **Patrones emergentes**: 1\n\n---\n\n## 🎯 Top 5 Tendencias del Día\n\n1. **LLM** (mencionado 2 veces)\n\n## 🆕 Frameworks/Herramientas Detectadas\n\n- **arize**: 1 menciones\n\n## 📈 Patrones Arquitectónicos Emergentes\n\n### Agentic Workflows\n**Frecuencia**: 2 artículos\n**Keywords**: agent, orchestration, multi-agent\n\n\n## 📚 Artículos Recientes (ArXiv)\n\n_No se obtuvieron papers de ArXiv._\n\n## 🐙 Repositorios Trending (GitHub)\n\n### [iam567/LifeManga](https://github.com/iam567/LifeManga)\n- **⭐ Stars**: 225\n- **Lenguaje**: Swift\n- **Descripción**: ios swift swiftui openai gpt-image manga ai-art\n- **Creado**: 2026-05-07\n\n### [kerlos/pordee](https://github.com/kerlos/pordee)\n- **⭐ Stars**: 142\n- **Lenguaje**: JavaScript\n- **Descripción**: ตอบสั้นๆ ก็เข้าใจแบบพอดีๆ\n- **Creado**: 2026-05-07\n\n### [Outpostshewharf/Edgenuity-AI-Helper](https://github.com/Outpostshewharf/Edgenuity-AI-Helper)\n- **⭐ Stars**: 107\n- **Lenguaje**: None\n- **Descripción**: edgenuity mod menu || ai chatgpt || edgenuity ai helper || edgenuity\n- **Creado**: 2026-05-07\n\n### [nooncheetahstart/Kahoot-tools-AI](https://github.com/nooncheetahstart/Kahoot-tools-AI)\n- **⭐ Stars**: 106\n- **Lenguaje**: Python\n- **Descripción**: Kahoot || Kahoot helper || Kahoot tools || Kahoot ai\n- **Creado**: 2026-05-08\n\n### [Sayhi-bzb/AIEden](https://github.com/Sayhi-bzb/AIEden)\n- **⭐ Stars**: 68\n- **Lenguaje**: TypeScript\n- **Descripción**: an LLM-native world and civilization\n- **Creado**: 2026-05-07\n\n\n## 📊 Métricas de Calidad\n\n- **Fuentes activas**: 1/3\n- **Papers con código**: 0\n- **Diversidad de fuentes**: Media\n\n---\n\n*Reporte generado automáticamente a las 14:20:44*"
+}

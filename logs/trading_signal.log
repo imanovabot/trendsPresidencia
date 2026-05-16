@@ -1,0 +1,6 @@
+2026-05-10 22:49:11,504 - app.database - ERROR - ❌ Error en DB: (psycopg2.OperationalError) connection to server at "postgres" (fd8d:a61b:6154::2), port 5432 failed: FATAL:  password authentication failed for user "ima-postgres"
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-05-10 22:49:11,542 - app.database - ERROR - ❌ Error en DB: (psycopg2.OperationalError) connection to server at "postgres" (fd8d:a61b:6154::2), port 5432 failed: FATAL:  password authentication failed for user "ima-postgres"
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)

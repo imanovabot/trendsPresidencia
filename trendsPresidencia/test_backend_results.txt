@@ -1,0 +1,33 @@
+Exit code: 0
+============================= test session starts ==============================
+platform linux -- Python 3.13.5, pytest-9.0.3, pluggy-1.6.0 -- /opt/hermes/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace/trendsPresidencia/tests
+configfile: pytest.ini
+plugins: anyio-4.13.0, asyncio-1.3.0, xdist-3.8.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 14 items
+
+tests/test_backend.py::TestHealth::test_health_status PASSED             [  7%]
+tests/test_backend.py::TestHealth::test_health_services PASSED           [ 14%]
+tests/test_backend.py::TestCandidates::test_candidates_returns_list PASSED [ 21%]
+tests/test_backend.py::TestCandidates::test_candidate_structure PASSED   [ 28%]
+tests/test_backend.py::TestCandidates::test_candidate_sources_structure PASSED [ 35%]
+tests/test_backend.py::TestCandidates::test_momentum_values PASSED       [ 42%]
+tests/test_backend.py::TestCandidates::test_candidate_count PASSED       [ 50%]
+tests/test_backend.py::TestCandidates::test_candidate_names PASSED       [ 57%]
+tests/test_backend.py::TestCandidateDetail::test_get_abelardo PASSED     [ 64%]
+tests/test_backend.py::TestCandidateDetail::test_get_ivan_cepeda PASSED  [ 71%]
+tests/test_backend.py::TestCandidateDetail::test_get_paloma_valencia PASSED [ 78%]
+tests/test_backend.py::TestCandidateDetail::test_get_sergio_fajardo PASSED [ 85%]
+tests/test_backend.py::TestCandidateDetail::test_candidate_not_found PASSED [ 92%]
+tests/test_backend.py::TestStats::test_stats_endpoint PASSED             [100%]
+
+=============================== warnings summary ===============================
+../../opt/hermes/.venv/lib/python3.13/site-packages/_pytest/config/__init__.py:1434
+  /opt/hermes/.venv/lib/python3.13/site-packages/_pytest/config/__init__.py:1434: PytestConfigWarning: Unknown config option: playwright_browser
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 14 passed, 1 warning in 5.54s =========================
