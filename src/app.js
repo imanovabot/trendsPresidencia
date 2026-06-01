@@ -28,9 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 // CONFIGURACIÓN
 // ============================================
 
-const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:8001'
-    : '/api';
+const API_BASE_URL = '/api';  // Rutas relativas para que nginx proxee
 
 // ============================================
 // DATA LOADING
@@ -268,6 +266,14 @@ function renderDetail(candidate) {
     const { positive, neutral, negative } = candidate.sentiment_breakdown;
     const total = positive + neutral + negative;
 
+    // Nuevos datos electorales
+    const stability = candidate.historical_stability || 2.5;
+    const stabilityClass = stability < 2.0 ? 'stable' : stability < 3.0 ? 'moderate' : 'volatile';
+    const noiseDetection = candidate.noise_detection || {};
+    const isNoise = noiseDetection.is_shock || false;
+    const relatedQueries = candidate.related_queries || [];
+    const regionalData = candidate.regional_distribution || {};
+
     detailPanel.innerHTML = `
         <div class="detail-header">
             <div class="detail-title">
@@ -309,6 +315,71 @@ function renderDetail(candidate) {
                     </div>
                 </div>
             </div>
+        </div>
+
+        <!-- NUEVA SECCIÓN: Análisis Electoral Avanzado -->
+        <div class="electoral-analysis-section">
+            <h3>📊 Análisis Electoral</h3>
+
+            <!-- Estabilidad -->
+            <div class="analysis-card">
+                <div class="analysis-label">Estabilidad de la Curva (Voto Duro)</div>
+                <div class="stability-meter ${stabilityClass}">
+                    <div class="stability-value" style="width: ${Math.min(stability * 10, 100)}%"></div>
+                </div>
+                <div class="analysis-detail">
+                    <span class="stability-score">${stability}</span>
+                    <span class="stability-text">${getStabilityText(stability)}</span>
+                </div>
+            </div>
+
+            <!-- Ruido -->
+            ${isNoise ? `
+            <div class="analysis-card noise-warning">
+                <div class="analysis-label">⚠️ Ruido Detectado</div>
+                <p>${noiseDetection.interpretation || 'Pico anómalo en las últimas horas'}</p>
+                <small>Z-score: ${noiseDetection.z_score || 'N/A'}</small>
+            </div>
+            ` : `
+            <div class="analysis-card noise-ok">
+                <div class="analysis-label">✅ Sin Ruido</div>
+                <p>El interés es estable y representativo del electorado real.</p>
+            </div>
+            `}
+
+            <!-- Consultas Relacionadas -->
+            <div class="analysis-card">
+                <div class="analysis-label">🔍 Consultas Relacionadas</div>
+                ${relatedQueries.length > 0 ? `
+                <div class="queries-list">
+                    ${relatedQueries.slice(0, 5).map(q => {
+                        const isElectoral = !['stream', 'clip', 'memes', 'video', 'youtube', 'westcol'].some(kw => q.toLowerCase().includes(kw));
+                        return `<span class="query-tag ${isElectoral ? 'electoral' : 'noise'}">${q}</span>`;
+                    }).join('')}
+                </div>
+                ` : '<p class="text-muted">Sin consultas relacionadas disponibles</p>'}
+            </div>
+
+            <!-- Distribución Regional -->
+            ${Object.keys(regionalData).length > 0 ? `
+            <div class="analysis-card">
+                <div class="analysis-label">🗺️ Interés por Región</div>
+                <div class="regional-bars">
+                    ${Object.entries(regionalData)
+                        .sort((a, b) => b[1] - a[1])
+                        .slice(0, 5)
+                        .map(([region, value]) => `
+                        <div class="region-row">
+                            <span class="region-name">${region}</span>
+                            <div class="region-bar-container">
+                                <div class="region-bar" style="width: ${value}%"></div>
+                            </div>
+                            <span class="region-value">${value}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            ` : ''}
         </div>
 
         <div class="sentiment-section">
@@ -354,6 +425,17 @@ function renderDetail(candidate) {
             </p>
         </div>
     `;
+}
+
+// ============================================
+// NUEVAS FUNCIONES AUXILIARES
+// ============================================
+
+function getStabilityText(stability) {
+    if (stability < 1.5) return "Muy estable — bases disciplinadas (ej: Cepeda 2022)";
+    if (stability < 3.0) return "Estable — combinación de voto duro + indecisos";
+    if (stability < 5.0) return "Moderadamente volátil — depende de eventos regionales";
+    return "Muy volátil — sensible a shocks (streams, noticias)";
 }
 
 // ============================================

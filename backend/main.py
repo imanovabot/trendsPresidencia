@@ -231,7 +231,7 @@ def create_app() -> FastAPI:
 
     @app.get("/api/v1/candidates/{candidate_id}", response_model=dict[str, Any])
     async def get_candidate_detail(candidate_id: str):
-        """Obtiene detalle de un candidato específico"""
+        """Obtiene detalle de un candidato específico con análisis electoral avanzado"""
         try:
             data_file = DATA_DIR / "candidates.json"
             with open(data_file) as f:
@@ -256,6 +256,35 @@ def create_app() -> FastAPI:
             except Exception as e:
                 logger.error(f"Error obteniendo videos: {e}")
                 candidate["recent_videos"] = []
+
+            # Obtener datos electorales avanzados
+            try:
+                # Consultas relacionadas
+                related = await google_trends.get_related_queries(candidate["name"])
+                candidate["related_queries"] = related
+
+                # Estabilidad
+                stability = await google_trends.calculate_stability_score(candidate["name"])
+                candidate["historical_stability"] = stability
+
+                # Detección de ruido
+                noise_check = await google_trends.detect_noise_shock(candidate["name"])
+                candidate["noise_detection"] = noise_check
+
+                # Interés por región
+                regional = await google_trends.get_interest_by_region(
+                    candidate["name"],
+                    resolution="REGION"
+                )
+                candidate["regional_distribution"] = regional
+
+            except Exception as e:
+                logger.error(f"Error obteniendo datos electorales: {e}")
+                # No fallar si estos datos no están disponibles
+                candidate.setdefault("related_queries", [])
+                candidate.setdefault("historical_stability", 2.5)
+                candidate.setdefault("noise_detection", {})
+                candidate.setdefault("regional_distribution", {})
 
             return candidate
 
@@ -285,13 +314,55 @@ def create_app() -> FastAPI:
 
             results = {}
 
-            # Google Trends
+            # 1. Google Trends con parámetros avanzados
             try:
-                trends_scores = await google_trends.get_trends_for_candidates(names_to_refresh)
+                # Cargar configuración de topics desde data/trends_config.json si existe
+                trends_config = {}
+                config_file = DATA_DIR / "trends_config.json"
+                if config_file.exists():
+                    with open(config_file) as f:
+                        trends_config = json.load(f)
+
+                candidate_topics = trends_config.get("candidate_topics", {})
+                use_topics = trends_config.get("use_topics", False)
+
+                # Usar ventana de tiempo electoral óptima
+                electoral_timeframe = "now 7-d"  # Promedio semanal para estructura
+
+                trends_scores = await google_trends.get_trends_for_candidates(
+                    names_to_refresh,
+                    timeframe=electoral_timeframe,
+                    use_topic=use_topics,
+                    candidate_topics=candidate_topics
+                )
                 results["google_trends"] = trends_scores
                 for c in candidates:
                     if c["name"] in trends_scores:
                         c["sources"]["google_trends"] = trends_scores[c["name"]]
+
+                # Obtener datos adicionales para análisis avanzado
+                for c in candidates:
+                    if c["name"] in names_to_refresh:
+                        # Consultas relacionadas
+                        related = await google_trends.get_related_queries(c["name"])
+                        c["related_queries"] = related
+
+                        # Estabilidad (desviación estándar horaria)
+                        stability = await google_trends.calculate_stability_score(c["name"])
+                        c["historical_stability"] = stability
+
+                        # Detección de ruido
+                        noise_check = await google_trends.detect_noise_shock(c["name"])
+                        c["noise_detection"] = noise_check
+
+                        # Interés por región (solo para Colombia)
+                        regional = await google_trends.get_interest_by_region(
+                            c["name"],
+                            resolution="REGION",
+                            timeframe=electoral_timeframe
+                        )
+                        c["regional_distribution"] = regional
+
             except Exception as e:
                 logger.error(f"Error en refresh Google Trends: {e}")
                 results["google_trends"] = {"error": str(e)}
@@ -411,6 +482,183 @@ def create_app() -> FastAPI:
         except Exception as e:
             logger.error(f"Error en /stats: {e}", exc_info=True)
             raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post("/api/v1/predictions/runoff", response_model=dict[str, Any])
+    async def predict_runoff(candidate_names: list[str] | None = None):
+        """
+        Calcula pronóstico de segunda vuelta usando el algoritmo de alineación.
+
+        Body (opcional): {"candidate_names": ["Abelardo", "Iván Cepeda"]}
+        Si no se especifica, usa todos los candidatos activos.
+        """
+        try:
+            data_file = DATA_DIR / "candidates.json"
+            with open(data_file) as f:
+                data = json.load(f)
+
+            candidates_data = data["candidates"]
+
+            # Filtrar por nombres si se especifica
+            if candidate_names:
+                candidates_data = [c for c in candidates_data if c["name"] in candidate_names]
+
+            # Construir objetos CandidateData para el motor de predicción
+            from services.prediction_engine import CandidateData, calculate_electoral_prediction
+
+            candidates = []
+            for c in candidates_data:
+                candidates.append(CandidateData(
+                    name=c["name"],
+                    trends_score=c["sources"].get("google_trends", 0),
+                    historical_stability=c.get("historical_stability", 2.5),
+                    is_center_candidate=c.get("is_center_candidate", False),
+                    related_queries=c.get("related_queries", []),
+                    regional_strength=c.get("regional_distribution", {}),
+                    base_support=c.get("base_support", None),
+                ))
+
+            # Calcular pronóstico
+            prediction = calculate_electoral_prediction(candidates)
+
+            # Añadir metadata de candidatos
+            prediction["candidates_metadata"] = {
+                c["name"]: {
+                    "party": c["party"],
+                    "current_momentum": c["momentum"],
+                    "stability": c.get("historical_stability", "N/A"),
+                    "is_center": c.get("is_center_candidate", False),
+                }
+                for c in candidates_data
+            }
+
+            return prediction
+
+        except Exception as e:
+            logger.error(f"Error en /predictions/runoff: {e}", exc_info=True)
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/api/v1/trends/related-queries/{candidate_name}", response_model=dict[str, Any])
+    async def get_candidate_related_queries(candidate_name: str, timeframe: str | None = None):
+        """Obtiene las búsquedas relacionadas de un candidato para filtrar ruido"""
+        try:
+            queries = await google_trends.get_related_queries(candidate_name, timeframe=timeframe)
+
+            # Clasificar queries por tipo
+            electoral_queries = []
+            noise_queries = []
+
+            noise_keywords = ["stream", "clip", "memes", "video", "twitter", "x.com", "youtube", "westcol"]
+
+            for q in queries:
+                q_lower = q.lower()
+                if any(kw in q_lower for kw in noise_keywords):
+                    noise_queries.append(q)
+                else:
+                    electoral_queries.append(q)
+
+            return {
+                "candidate": candidate_name,
+                "related_queries": queries,
+                "electoral_queries": electoral_queries,
+                "noise_queries": noise_queries,
+                "timeframe": timeframe or "now 7-d",
+                "interpretation": "Queries electorales predicen votos; queries de entretenimiento indican ruido" if electoral_queries else "Sin queries electorales identificadas",
+            }
+        except Exception as e:
+            logger.error(f"Error en related-queries: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/api/v1/trends/regional/{candidate_name}", response_model=dict[str, Any])
+    async def get_candidate_regional_interest(candidate_name: str, timeframe: str | None = None):
+        """Obtiene el interés por departamentos/regiones para un candidato"""
+        try:
+            regional = await google_trends.get_interest_by_region(
+                candidate_name,
+                resolution="REGION",
+                timeframe=timeframe
+            )
+
+            # Calcular métricas
+            if regional:
+                values = list(regional.values())
+                max_region = max(regional.items(), key=lambda x: x[1])
+                min_region = min(regional.items(), key=lambda x: x[1])
+
+                return {
+                    "candidate": candidate_name,
+                    "regional_distribution": regional,
+                    "strongest_region": {"name": max_region[0], "value": max_region[1]},
+                    "weakest_region": {"name": min_region[0], "value": min_region[1]},
+                    "national_average": round(sum(values) / len(values), 2),
+                    "timeframe": timeframe or "now 7-d",
+                }
+            else:
+                return {"candidate": candidate_name, "regional_distribution": {}, "error": "Sin datos regionales"}
+
+        except Exception as e:
+            logger.error(f"Error en regional: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/api/v1/trends/noise-detection/{candidate_name}", response_model=dict[str, Any])
+    async def detect_candidate_noise(candidate_name: str):
+        """Detecta si el candidato tiene un shock de audiencia (ruido) en las últimas 12h"""
+        try:
+            noise = await google_trends.detect_noise_shock(candidate_name)
+            noise["candidate"] = candidate_name
+            noise["recommendation"] = _get_noise_recommendation(noise)
+            return noise
+        except Exception as e:
+            logger.error(f"Error en noise-detection: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/api/v1/trends/stability/{candidate_name}", response_model=dict[str, Any])
+    async def get_candidate_stability(candidate_name: str):
+        """Obtiene la estabilidad horaria del candidato (voto duro vs volátil)"""
+        try:
+            stability = await google_trends.calculate_stability_score(candidate_name)
+            series = await google_trends.get_hourly_series(candidate_name, timeframe="today 24-h")
+
+            # Clasificar
+            if stability < 1.5:
+                classification = "muy estable (voto duro)"
+            elif stability < 3.0:
+                classification = "estable"
+            elif stability < 5.0:
+                classification = "moderadamente volátil"
+            else:
+                classification = "muy volátil (dependiente de eventos)"
+
+            return {
+                "candidate": candidate_name,
+                "stability_score": stability,
+                "classification": classification,
+                "hourly_series": series,
+                "interpretation": _get_stability_interpretation(stability),
+            }
+        except Exception as e:
+            logger.error(f"Error en stability: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    def _get_noise_recommendation(noise: dict) -> str:
+        """Genera recomendación basada en detección de ruido"""
+        if not noise.get("is_shock"):
+            return "El interés es estable y representativo del electorado real."
+        elif noise.get("current_value", 0) > noise.get("historical_mean", 0):
+            return "Pico detectado. Cruza con 'Consultas Relacionadas' para confirmar si es interés electoral o ruido de entretenimiento."
+        else:
+            return "Caída anómala. Verifica noticias recientes que puedan haber afectado la percepción del candidato."
+
+    def _get_stability_interpretation(stability: float) -> str:
+        """Interpretación de la estabilidad"""
+        if stability < 1.5:
+            return "Curva extremadamente plana: bases electorales disciplinadas y movilizadas. Similar a Iván Cepeda en 2022."
+        elif stability < 3.0:
+            return "Variación normal en jornada electoral: combina bases fijas con interés de última hora."
+        elif stability < 5.0:
+            return "Picos moderados: el candidato depende de eventos específicos o concentración regional."
+        else:
+            return "Alta volatilidad: el interés es muy sensible a noticias, streams o eventos virales. Difícil de predecir."
+
 
     @app.on_event("startup")
     async def startup_event():

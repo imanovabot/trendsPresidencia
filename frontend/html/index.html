@@ -89,12 +89,28 @@
                     <h3>El "Mix" de Momentum</h3>
                     <p>El porcentaje de relevancia se calcula como un promedio ponderado de tres fuentes:</p>
                     <ul>
-                        <li><strong>Google Trends (40%)</strong>: Volumen de búsquedas. Mide curiosidad/interés de la población.</li>
+                        <li><strong>Google Trends (40%)</strong>: Volumen de búsquedas. <em>Usa "Temas" (Topics) para agrupar variantes, no términos exactos.</em></li>
                         <li><strong>YouTube (30%)</strong>: Visualizaciones, likes y shares de videos relacionados.</li>
                         <li><strong>Sentimiento (30%)</strong>: IA analiza comentarios en redes (positivo/negativo/neutro).</li>
                     </ul>
+                    <h3>Ventana de Tiempo Electoral</h3>
+                    <p>Para máxima precisión, se usa el promedio de los últimos <strong>7 días</strong> (tendencia estructural) + las últimas <strong>24 horas</strong> (voto indeciso).</p>
+                    <ul>
+                        <li><strong>12:00 - 16:00</strong>: Ventana de máxima predictividad (hora del votante indeciso)</li>
+                        <li><strong>Consultas Relacionadas</strong>: Se clasifican en electorales (predicen votos) vs. ruido (streams, memes)</li>
+                    </ul>
+                    <h3>Algoritmo de Alineación</h3>
+                    <p>Se aplican factores de corrección calibrados con datos reales de elecciones 2022-2026:</p>
+                    <ul>
+                        <li><strong>Candidatos de centro</strong>: Se desinfla un 40% (sobreestimación histórica por curiosidad)</li>
+                        <li><strong>Candidatos estables</strong> (curva plana): Se premia +5% (voto duro disciplinado)</li>
+                        <li><strong>Detección de ruido</strong>: Se identifican picos anómalos (shocks de audiencia) y se ajustan</li>
+                    </ul>
                     <h3>Escala</h3>
                     <p>Cada fuente se normaliza a una escala 0-100 antes de ponderar. El resultado final es un porcentaje de visibilidad relativa entre candidatos.</p>
+                    <p class="disclaimer-box">
+                        ⚠️ <strong>Importante</strong>: Esta herramienta NO es una encuesta de intención de voto. Mide visibilidad digital. Los resultados electorales finales pueden variar. Consulte siempre la Registraduría Nacional para resultados oficiales.
+                    </p>
                 </div>
                 <button class="close-btn" id="closeModal">Cerrar</button>
             </div>

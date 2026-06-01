@@ -1,7 +1,8 @@
 {
   "project": "trendsPresidencia",
-  "version": "0.1.0",
-  "last_updated": "2026-05-13T00:00:00Z",
+  "version": "0.2.0",
+  "last_updated": "2026-05-31T00:00:00Z",
+  "description": "Dashboard de Momentum Digital — Ajustado con lecciones de Colombia 2026",
   "candidates": [
     {
       "id": "abelardo",
@@ -24,7 +25,24 @@
         "Adhesiones políticas incrementan visibilidad"
       ],
       "description": "Líder actual con alto volumen de búsquedas y sentimiento positivo neto.",
-      "color": "#8b5cf6"
+      "color": "#8b5cf6",
+      "is_center_candidate": false,
+      "historical_stability": 2.2,
+      "topic_id": "/g/11bwfmp95b",
+      "regional_strength": {
+        "Antioquia": 85,
+        "Costa": 95,
+        "Bogotá": 70,
+        "Valle": 65
+      },
+      "base_support": 42.0,
+      "related_queries": [
+        "propuestas Abelardo",
+        "Abelardo de la Espriella presidente",
+        "Partido Conservador",
+        "Abelardo educación",
+        "Abelardo economía"
+      ]
     },
     {
       "id": "ivan-cepeda",
@@ -47,7 +65,24 @@
         "Anuncio de adhesión política mantiene engagement"
       ],
       "description": "Fuerte en YouTube con comunidad activa consuming contenido.",
-      "color": "#3b82f6"
+      "color": "#3b82f6",
+      "is_center_candidate": false,
+      "historical_stability": 1.4,
+      "topic_id": "/g/1q6jc4dr2",
+      "regional_strength": {
+        "Bogotá": 90,
+        "Antioquia": 75,
+        "Pacífico": 85,
+        "Santanderes": 70
+      },
+      "base_support": 38.0,
+      "related_queries": [
+        "Iván Cepeda propuestas",
+        "Polo Democrático",
+        "Cepeda presidente",
+        "Iván Cepeda salud",
+        "Iván Cepeda educación"
+      ]
     },
     {
       "id": "paloma-valencia",
@@ -70,7 +105,21 @@
         "Caída en búsquedas directas en Google"
       ],
       "description": "Momentum en declive con sentimiento digital más bajo.",
-      "color": "#ef4444"
+      "color": "#ef4444",
+      "is_center_candidate": false,
+      "historical_stability": 2.5,
+      "regional_strength": {
+        "Antioquia": 80,
+        "Bogotá": 65,
+        "Costa": 60
+      },
+      "base_support": 6.5,
+      "related_queries": [
+        "Paloma Valencia propuestas",
+        "Centro Democrático",
+        "Valencia presidente",
+        "Paloma seguridad"
+      ]
     },
     {
       "id": "sergio-fajardo",
@@ -93,15 +142,30 @@
         "Posicionamiento como alternativa de centro"
       ],
       "description": "Fuerte en YouTube pero con baja visibilidad en búsquedas.",
-      "color": "#10b981"
+      "color": "#10b981",
+      "is_center_candidate": true,
+      "historical_stability": 3.8,
+      "regional_strength": {
+        "Antioquia": 90,
+        "Bogotá": 75,
+        "Pacífico": 70
+      },
+      "base_support": 4.2,
+      "related_queries": [
+        "Sergio Fajardo propuestas",
+        "Partido Verde",
+        "Fajardo presidente",
+        "Fajardo educación",
+        "Alianza Verde"
+      ]
     }
   ],
   "categories": [
     "Todos",
-    "Trending",
-    "Alza",
-    "Baja",
-    "Estable"
+    "Partido Conservador",
+    "Polo Democrático",
+    "Centro Democrático",
+    "Partido Verde"
   ],
   "weights": {
     "google_trends": 0.40,
@@ -110,9 +174,24 @@
   },
   "update_frequency_hours": 6,
   "data_sources": {
-    "google_trends": "pytrends library (unofficial API)",
+    "google_trends": "pytrends library (unofficial API) — Usa 'Temas' (Topics) para mayor precisión",
     "youtube": "YouTube Data API v3",
     "sentiment": "HuggingFace model (cardiffnlp/twitter-roberta-base-sentiment)",
     "news": "RSS feeds from Colombian media"
+  },
+  "electoral_config": {
+    "use_topics": true,
+    "optimal_time_windows": {
+      "morning": "08:00-11:00 — Voto andino temprano",
+      "lunch": "12:00-14:00 — Efecto Costa activa",
+      "peak": "12:00-16:00 — Ventana de máxima predictividad",
+      "evening": "14:00-16:00 — Última hora de votación"
+    },
+    "second_round_scenarios": {
+      "cepeda_vs_abelardo": {
+        "cepeda_advantage": 2.5,
+        "transfer_from_center": {"to_left": 0.33, "to_right": 0.33, "blank": 0.34}
+      }
+    }
   }
 }

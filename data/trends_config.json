@@ -1,0 +1,17 @@
+{
+  "use_topics": true,
+  "candidate_topics": {
+    "Abelardo de la Espriella": "/g/11bwfmp95b",
+    "Iván Cepeda": "/g/1q6jc4dr2",
+    "Paloma Valencia": "/m/02_bdxm",
+    "Sergio Fajardo": "/m/0gys3x8"
+  },
+  "electoral_settings": {
+    "default_timeframe": "now 7-d",
+    "peak_hours": ["12:00", "13:00", "14:00", "15:00", "16:00"],
+    "regional_resolution": "REGION",
+    "detect_noise": true,
+    "noise_threshold": 2.5
+  },
+  "methodology_notes": "Usar Topics en lugar de Términos para agrupar variantes ortográficas y apodos. La ventana de 7 días captura la tendencia estructural, mientras que las últimas 24h capturan el voto indeciso."
+}
