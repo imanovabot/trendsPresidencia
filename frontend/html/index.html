@@ -26,6 +26,25 @@
 
         <!-- Main Content -->
         <main class="main">
+            <!-- Google Trends Embed — Segunda Vuelta -->
+            <section class="trends-embed-section">
+                <div class="trends-header" style="text-align: center; margin-bottom: 15px;">
+                    <h3 style="color: var(--text-primary); margin: 0 0 5px 0;">
+                        📊 Google Trends — Segunda Vuelta (21 de junio)
+                    </h3>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">
+                        Abelardo de la Espriella vs Iván Cepeda — Tiempo real
+                    </p>
+                </div>
+                <div id="trends-second-round-container"></div>
+                <div class="trends-timeframe-buttons">
+                    <button onclick="updateTrendsTimeframe('now 1-d')" title="Últimas 24 horas">24h</button>
+                    <button onclick="updateTrendsTimeframe('now 7-d')" title="Últimos 7 días" class="active">7 días</button>
+                    <button onclick="updateTrendsTimeframe('today 12-h')" title="Últimas 12 horas">12h</button>
+                    <button onclick="updateTrendsTimeframe('now 4-h')" title="Últimas 4 horas">4h</button>
+                </div>
+            </section>
+
             <!-- Controls -->
             <section class="controls">
                 <div class="search-box">
@@ -118,6 +137,11 @@
     </div>
 
     <!-- Scripts -->
+    <!-- Google Trends Embed Loader -->
+    <script type="text/javascript" src="https://ssl.gstatic.com/trends_nrtr/4448_RC01/embed_loader.js"></script>
+    <!-- Trends Embed para Segunda Vuelta -->
+    <script src="src/trends-embed-second-round.js"></script>
+    <!-- App principal -->
     <script src="src/app.js"></script>
 </body>
 </html>

@@ -1,0 +1,122 @@
+<!-- Google Trends Embed — Segunda Vuelta Colombia 2026 -->
+<script type="text/javascript" src="https://ssl.gstatic.com/trends_nrtr/4448_RC01/embed_loader.js"></script>
+
+<div id="trends-second-round" style="width: 100%; max-width: 900px; margin: 0 auto 30px;">
+  <div class="trends-header" style="margin-bottom: 15px; text-align: center;">
+    <h3 style="color: var(--text-primary); margin: 0 0 5px 0;">
+      📊 Google Trends — Segunda Vuelta (21 de junio)
+    </h3>
+    <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">
+      Comparación Abelardo de la Espriella vs Iván Cepeda — Últimos 7 días
+    </p>
+  </div>
+  <div id="trends-second-round-container" style="background: var(--bg-card); border-radius: var(--border-radius); padding: 15px; min-height: 400px;"></div>
+  <div style="text-align: center; margin-top: 10px;">
+    <button onclick="updateTrendsTimeframe('now 1-d')" style="background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin: 2px;">
+      Últimas 24h
+    </button>
+    <button onclick="updateTrendsTimeframe('now 7-d')" style="background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin: 2px;">
+      Últimos 7 días
+    </button>
+    <button onclick="updateTrendsTimeframe('today 12-h')" style="background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin: 2px;">
+      Últimas 12h
+    </button>
+  </div>
+</div>
+
+<script>
+// Configuración específica para segunda vuelta
+const SECOND_ROUND_CONFIG = {
+  comparisonItem: [
+    {
+      keyword: "/g/11bwfmp95b",  // Abelardo de la Espriella
+      geo: "CO",
+      time: "now 7-d"  // Promedio de 7 días para ver tendencia estructural
+    },
+    {
+      keyword: "/g/1q6jc4dr2",  // Iván Cepeda
+      geo: "CO",
+      time: "now 7-d"
+    }
+  ],
+  category: 0,
+  property: "",
+  exploreQuery: "date=now%207-d&geo=CO&q=%2Fg%2F11bwfmp95b,%2Fg%2F1q6jc4dr2"
+};
+
+// Colores personalizados para coincidir con la app
+const CANDIDATE_COLORS = {
+  "/g/11bwfmp95b": "#8b5cf6",  // Abelardo — morado
+  "/g/1q6jc4dr2": "#3b82f6"   // Iván Cepeda — azul
+};
+
+function renderSecondRoundTrends(timeframe = "now 7-d") {
+  const container = document.getElementById('trends-second-round-container');
+  if (!container) return;
+
+  // Actualizar timeframe
+  SECOND_ROUND_CONFIG.comparisonItem.forEach(item => {
+    item.time = timeframe;
+  });
+  SECOND_ROUND_CONFIG.exploreQuery = `date=${encodeURIComponent(timeframe)}&geo=CO&q=%2Fg%2F11bwfmp95b,%2Fg%2F1q6jc4dr2`;
+
+  // Limpiar
+  container.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">Cargando...</p>';
+
+  // Renderizar
+  if (typeof trends !== 'undefined' && trends.embed && trends.embed.renderExploreWidget) {
+    try {
+      container.innerHTML = '';
+      trends.embed.renderExploreWidget(
+        "TIMESERIES",
+        SECOND_ROUND_CONFIG,
+        { exploreQuery: SECOND_ROUND_CONFIG.exploreQuery }
+      );
+      console.log(`✅ Segundo round embed cargado (${timeframe})`);
+    } catch (error) {
+      console.error("Error:", error);
+      container.innerHTML = `
+        <p style="text-align: center; color: var(--text-secondary);">
+          Error al cargar. <a href="https://trends.google.es/trends/explore?date=${encodeURIComponent(timeframe)}&geo=CO&q=%2Fg%2F11bwfmp95b,%2Fg%2F1q6jc4dr2" target="_blank">Ver en Google Trends</a>
+        </p>`;
+    }
+  } else {
+    console.warn("trends.embed no disponible, reintentando...");
+    setTimeout(() => renderSecondRoundTrends(timeframe), 1000);
+  }
+}
+
+// Auto-render al cargar la página
+document.addEventListener('DOMContentLoaded', () => {
+  if (document.getElementById('trends-second-round-container')) {
+    // Esperar un poco a que el embed loader esté listo
+    setTimeout(() => renderSecondRoundTrends('now 7-d'), 500);
+  }
+});
+
+// Exponer para botones
+window.updateTrendsTimeframe = function(timeframe) {
+  renderSecondRoundTrends(timeframe);
+};
+
+// Exponer también para actualizar desde fuera
+window.refreshSecondRoundTrends = function() {
+  renderSecondRoundTrends('now 7-d');
+};
+</script>
+
+<style>
+/* Estilos específicos para el embed de segunda vuelta */
+#trends-second-round {
+  margin: 30px 0;
+}
+
+#trends-second-round-container {
+  position: relative;
+}
+
+/* Ajustar altura del embed según need */
+#trends-second-round-container > div {
+  min-height: 350px !important;
+}
+</style>

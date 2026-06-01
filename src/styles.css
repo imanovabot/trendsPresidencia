@@ -851,3 +851,88 @@ body {
         padding: 3px 8px;
     }
 }
+
+/* ============================================
+   GOOGLE TRENDS EMBED — SEGUNDA VUELTA
+   ============================================ */
+
+.trends-embed-section {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto 30px;
+    padding: 0 var(--spacing-md);
+}
+
+#trends-second-round-container {
+    background: var(--bg-card);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-md);
+    min-height: 450px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+#trends-second-round-container:empty::before {
+    content: "Cargando gráfico de Google Trends...";
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+#trends-second-round-container > div {
+    min-height: 400px !important;
+    width: 100% !important;
+}
+
+/* Ajustar el gráfico dentro del contenedor */
+#trends-second-round-container iframe {
+    border-radius: var(--border-radius) !important;
+}
+
+/* Botones de timeframe (si se usan en la página) */
+.trends-timeframe-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 15px;
+    flex-wrap: wrap;
+}
+
+.trends-timeframe-buttons button {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+}
+
+.trends-timeframe-buttons button:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--text-accent);
+}
+
+.trends-timeframe-buttons button.active {
+    background: var(--text-accent);
+    color: white;
+    border-color: var(--text-accent);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .trends-embed-section {
+        padding: 0 var(--spacing-sm);
+    }
+
+    #trends-second-round-container {
+        min-height: 350px;
+        padding: var(--spacing-sm);
+    }
+
+    #trends-second-round-container > div {
+        min-height: 300px !important;
+    }
+}

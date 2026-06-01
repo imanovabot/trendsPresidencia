@@ -1,0 +1,85 @@
+<!-- Google Trends Embed para trendsPresidencia -->
+<!-- Cargar el embed loader de Google Trends -->
+<script type="text/javascript" src="https://ssl.gstatic.com/trends_nrtr/4448_RC01/embed_loader.js"></script>
+
+<div id="trends-embed-container" style="width: 100%; max-width: 800px; margin: 20px auto;">
+    <!-- El gráfico se renderiza aquí -->
+</div>
+
+<script>
+// Configuración para la segunda vuelta (Abelardo vs Cepeda)
+// Usamos Topics (Temas) en lugar de términos exactos para mayor precisión
+
+const TRENDS_CONFIG = {
+  comparisonItem: [
+    {
+      keyword: "/g/11bwfmp95b",  // Abelardo de la Espriella - Topic ID oficial
+      geo: "CO",
+      time: "now 7-d"  // Ventana de 7 días para tendencia estructural
+    },
+    {
+      keyword: "/g/1q6jc4dr2",  // Iván Cepeda - Topic ID oficial
+      geo: "CO",
+      time: "now 7-d"
+    }
+  ],
+  category: 0,        // 0 = Todas las categorías
+  property: "",       // "" = web (no filtrar por imágenes, noticias, etc.)
+  exploreQuery: "date=now%207-d&geo=CO&q=%2Fg%2F11bwfmp95b,%2Fg%2F1q6jc4dr2"
+};
+
+// Función para renderizar el gráfico
+function renderTrendsEmbed(containerId, config) {
+  const container = document.getElementById(containerId);
+  if (!container) {
+    console.error(`Container ${containerId} no encontrado`);
+    return;
+  }
+
+  // Limpiar contenedor
+  container.innerHTML = '';
+
+  // Crear elemento para el embed
+  const embedElement = document.createElement('div');
+  embedElement.style.width = '100%';
+  embedElement.style.height = '400px';
+  container.appendChild(embedElement);
+
+  // Llamar a la API de embed de Google Trends
+  if (typeof trends !== 'undefined' && trends.embed && trends.embed.renderExploreWidget) {
+    try {
+      trends.embed.renderExploreWidget(
+        "TIMESERIES",
+        config,
+        { exploreQuery: config.exploreQuery }
+      );
+      console.log("✅ Trends embed cargado correctamente");
+    } catch (error) {
+      console.error("Error renderizando Trends embed:", error);
+      container.innerHTML = '<p style="color: var(--text-muted); text-align: center;">Error al cargar Google Trends. <a href="https://trends.google.es/trends/explore?date=now%207-d&geo=CO&q=%2Fg%2F11bwfmp95b,%2Fg%2F1q6jc4dr2" target="_blank">Ver en Google Trends</a></p>';
+    }
+  } else {
+    console.warn("trends.embed no disponible, esperando carga...");
+    // Reintentar después de 1 segundo
+    setTimeout(() => renderTrendsEmbed(containerId, config), 1000);
+  }
+}
+
+// Renderizar cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', () => {
+  // Renderizar en la página de detalle si existe el contenedor
+  if (document.getElementById('trends-embed-container')) {
+    renderTrendsEmbed('trends-embed-container', TRENDS_CONFIG);
+  }
+});
+
+// También exponer función para actualizar manualmente
+window.updateTrendsTimeframe = function(timeframe) {
+  // Actualizar timeframe dinámicamente
+  TRENDS_CONFIG.comparisonItem.forEach(item => {
+    item.time = timeframe;
+  });
+  TRENDS_CONFIG.exploreQuery = `date=${encodeURIComponent(timeframe)}&geo=CO&q=%2Fg%2F11bwfmp95b,%2Fg%2F1q6jc4dr2`;
+  renderTrendsEmbed('trends-embed-container', TRENDS_CONFIG);
+};
+</script>
