@@ -18,34 +18,34 @@
                 </h1>
                 <p class="tagline">Análisis Electoral — Segunda Vuelta Colombia 2026 (21 de junio)</p>
                 <p class="disclaimer">
-                    ⚠️ <strong>NO es una encuesta de intención de voto</strong> — Pronóstico basado en algoritmo calibrado con datos 2022
+                    ⚠️ <strong>NO es una encuesta de intención de voto</strong> — Pronóstico basado en Google Trends (7 días) + algoritmo calibrado con datos 2022
                 </p>
             </div>
         </header>
 
         <!-- Main Content -->
         <main class="main">
-            <!-- Análisis Electoral -->
-            <section class="analysis-section" id="analysisSection">
-                <div class="analysis-header">
-                    <h2>📈 Pronóstico de Segunda Vuelta</h2>
-                    <div class="analysis-meta">
-                        <span id="analysisLastUpdate">Actualizado: --:--:-- a. m.</span>
-                        <button onclick="refreshAnalysis()" class="refresh-btn">🔄 Actualizar</button>
+            <!-- Pronóstico de Segunda Vuelta -->
+            <section class="runoff-section">
+                <div class="runoff-header">
+                    <h2>🔮 Pronóstico de Segunda Vuelta</h2>
+                    <div class="runoff-meta">
+                        <span id="lastUpdate">Cargando...</span>
+                        <button onclick="refreshForecast()" class="refresh-btn">🔄 Actualizar</button>
                     </div>
                 </div>
 
-                <!-- Panel de Predicción -->
-                <div class="prediction-panel" id="predictionPanel">
-                    <h3>🔮 Resultado Proyectado</h3>
-                    <div class="prediction-bars" id="predictionBars">
+                <!-- Resultado Proyectado -->
+                <div class="prediction-panel">
+                    <h3>Resultado Proyectado</h3>
+                    <div class="prediction-bars">
                         <div class="prediction-bar-item">
                             <div class="prediction-bar-header">
                                 <span class="prediction-bar-label">Abelardo de la Espriella 🥇</span>
                                 <span class="prediction-bar-value" id="abelardoPct">--%</span>
                             </div>
                             <div class="prediction-bar-track">
-                                <div class="prediction-bar-fill" id="abelardoBar" style="--bar-color: #8b5cf6; --bar-color-light: #8b5cf6dd;"></div>
+                                <div class="prediction-bar-fill abelardo" id="abelardoBar"></div>
                             </div>
                         </div>
 
@@ -55,29 +55,21 @@
                                 <span class="prediction-bar-value" id="cepedaPct">--%</span>
                             </div>
                             <div class="prediction-bar-track">
-                                <div class="prediction-bar-fill" id="cepedaBar" style="--bar-color: #3b82f6; --bar-color-light: #3b82f6dd;"></div>
+                                <div class="prediction-bar-fill cepeda" id="cepedaBar"></div>
                             </div>
                         </div>
                     </div>
                     <div class="prediction-notes">
-                        <small>Algoritmo de alineación calibrado con datos reales 2022. Incluye factor de estabilidad (+5% para curvas planas).</small>
+                        <small>
+                            Datos de Google Topics IDs: Abelardo (/g/11bwfmp95b) y Cepeda (/g/1q6jc4dr2).
+                            Promedio de últimos 7 días. Algoritmo calibrado con elecciones 2022.
+                        </small>
                     </div>
                 </div>
 
-                <!-- Panel de Detalle por Candidato -->
-                <div class="candidates-detail-section">
-                    <h3 class="grid-title">📊 Desglose por Candidato</h3>
-                    <div class="candidates-grid" id="candidatesGrid">
-                        <!-- Se llena dinámicamente con JavaScript -->
-                    </div>
-                </div>
-            </section>
-
-            <!-- Candidatos -->
-            <section class="candidates-section">
-                <h2>📊 Candidatos</h2>
-                <div class="candidates-list" id="candidateList">
-                    <!-- Se llena dinámicamente con JavaScript -->
+                <!-- Métricas Detalladas -->
+                <div class="metrics-grid" id="metricsGrid">
+                    <!-- Se llena dinámicamente -->
                 </div>
             </section>
         </main>
@@ -85,7 +77,7 @@
         <!-- Footer -->
         <footer class="footer">
             <p>
-                Datos actualizados cada <strong id="updateFreq">6h</strong> |
+                Actualizado cada 6 horas |
                 Metodología: <a href="#methodology" id="methodologyLink">Ver explicación</a>
             </p>
             <p class="copyright">© 2026 trendsPresidencia — Solo lectura, sin fines electorales</p>
@@ -96,15 +88,16 @@
             <div class="modal-content">
                 <h2>Metodología</h2>
                 <div class="methodology-box">
-                    <h3>Algoritmo de Alineación</h3>
+                    <h3>Google Trends Topics + Algoritmo de Alineación</h3>
                     <p>Calibrado con datos reales de las elecciones 2022:</p>
                     <ul>
-                        <li><strong>Google Trends (promedio 7 días)</strong>: Mide interés electoral real usando Topics, no términos de búsqueda.</li>
-                        <li><strong>Factor de estabilidad (+5%)</strong>: Candidatos con curvas planas (desviación &lt; 1.5) tienen voto duro disciplinado.</li>
-                        <li><strong>Detección de ruido</strong>: Se identifican picos anómalos (z-score &gt; 2.5) y se descartan.</li>
+                        <li><strong>Google Trends (7 días, Topics IDs)</strong>: Usa identificadores oficiales de Google Topics para Abelardo (/g/11bwfmp95b) y Cepeda (/g/1q6jc4dr2). Agrupa variantes de búsqueda y elimina ruido.</li>
+                        <li><strong>Factor de estabilidad (+5%)</strong>: Candidatos con curvas planas (desviación estándar &lt; 1.5) tienen voto duro más disciplinado.</li>
+                        <li><strong>Detección de ruido</strong>: Se identifican picos anómalos (z-score &gt; 2.5) y se descartan del cálculo.</li>
+                        <li><strong>Redistribución de voto volátil</strong>: Votos de candidatos no presentes en segunda vuelta se redistribuyen según factores calibrados.</li>
                     </ul>
                     <p class="disclaimer-box">
-                        ⚠️ <strong>Importante</strong>: Esto NO es una encuesta. Mide visibilidad digital. Los resultados electorales pueden variar.
+                        ⚠️ <strong>Importante</strong>: Esto NO es una encuesta de intención de voto. Mide visibilidad digital. Los resultados electorales pueden variar.
                     </p>
                 </div>
                 <button type="button" class="close-btn" id="closeModal">Cerrar</button>
@@ -113,6 +106,6 @@
     </div>
 
     <!-- Scripts -->
-    <script src="src/app.js?v=20250602-1000"></script>
+    <script src="src/app.js?v=20250602-1100"></script>
 </body>
 </html>

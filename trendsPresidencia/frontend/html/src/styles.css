@@ -19,9 +19,7 @@
 
     /* Accent Colors for Candidates */
     --color-abelardo: #8b5cf6;  /* Purple */
-    --color-ivan: #3b82f6;      /* Blue */
-    --color-paloma: #ef4444;    /* Red */
-    --color-sergio: #10b981;    /* Green */
+    --color-cepeda: #3b82f6;    /* Blue */
 
     /* Borders & Shadows */
     --border-color: #2a2a3a;
@@ -96,8 +94,9 @@ body {
 }
 
 .header-content {
-    max-width: 1400px;
+    max-width: 800px;
     margin: 0 auto;
+    text-align: center;
 }
 
 .logo {
@@ -106,6 +105,7 @@ body {
     color: var(--text-accent);
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.5rem;
     margin-bottom: var(--spacing-xs);
 }
@@ -128,12 +128,13 @@ body {
     border-radius: var(--border-radius);
     border-left: 3px solid var(--text-accent);
     display: inline-block;
+    text-align: left;
 }
 
 .main {
     flex: 1;
     padding: var(--spacing-lg);
-    max-width: 1400px;
+    max-width: 800px;
     margin: 0 auto;
     width: 100%;
 }
@@ -157,601 +158,15 @@ body {
 }
 
 /* ============================================
-   CONTROLS (Search + Filter)
+   RUNOFF SECTION
    ============================================ */
 
-.controls {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--spacing-md);
-    align-items: center;
-    margin-bottom: var(--spacing-lg);
-    padding: var(--spacing-md);
-    background: var(--bg-card);
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow-sm);
+.runoff-section {
+    max-width: 700px;
+    margin: 0 auto;
 }
 
-.search-box {
-    position: relative;
-    flex: 1;
-    min-width: 280px;
-}
-
-.search-box input {
-    width: 100%;
-    padding: var(--spacing-sm) var(--spacing-md);
-    padding-left: 2.5rem;
-    font-size: 1rem;
-    background: var(--bg-input);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    color: var(--text-primary);
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.search-box input:focus {
-    outline: none;
-    border-color: var(--text-accent);
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
-}
-
-.search-icon {
-    position: absolute;
-    left: var(--spacing-sm);
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 1.2rem;
-    opacity: 0.6;
-}
-
-.filters {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-xs);
-}
-
-.filters label {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-}
-
-.filters select {
-    padding: var(--spacing-sm) var(--spacing-md);
-    font-size: 1rem;
-    background: var(--bg-input);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    color: var(--text-primary);
-    cursor: pointer;
-    min-width: 150px;
-}
-
-.stats {
-    font-size: 0.9rem;
-    color: var(--text-muted);
-    margin-left: auto;
-}
-
-/* Refresh Button */
-.refresh-btn {
-    padding: var(--spacing-sm) var(--spacing-md);
-    font-size: 0.9rem;
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    cursor: pointer;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.refresh-btn:hover {
-    background: var(--text-accent);
-    color: white;
-    border-color: var(--text-accent);
-}
-
-.refresh-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.refresh-btn.loading {
-    animation: pulse 1s infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-}
-
-/* ============================================
-   DASHBOARD GRID
-   ============================================ */
-
-.dashboard-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--spacing-lg);
-    min-height: 500px;
-}
-
-@media (max-width: 900px) {
-    .dashboard-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* ============================================
-   CANDIDATE LIST (Left Panel)
-   ============================================ */
-
-.candidate-list {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-sm);
-}
-
-.candidate-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    padding: var(--spacing-md);
-    cursor: pointer;
-    transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.candidate-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-    border-color: var(--text-accent);
-}
-
-.candidate-card.active {
-    border-color: var(--text-accent);
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3);
-}
-
-.candidate-info {
-    flex: 1;
-}
-
-.candidate-name {
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: 0.25rem;
-}
-
-.candidate-party {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-}
-
-.candidate-metrics {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: var(--spacing-xs);
-}
-
-.momentum-badge {
-    font-size: 1.4rem;
-    font-weight: 700;
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    background: var(--bg-tertiary);
-}
-
-.momentum-up {
-    color: #10b981;
-}
-
-.momentum-down {
-    color: #ef4444;
-}
-
-.change-indicator {
-    font-size: 0.85rem;
-    padding: 0.15rem 0.5rem;
-    border-radius: 12px;
-    background: var(--bg-tertiary);
-}
-
-.change-positive {
-    color: #10b981;
-}
-
-.change-negative {
-    color: #ef4444;
-}
-
-/* Mini bar for sources */
-.source-bars {
-    display: flex;
-    gap: 4px;
-    margin-top: var(--spacing-xs);
-}
-
-.source-bar {
-    width: 8px;
-    height: 20px;
-    border-radius: 2px;
-    opacity: 0.7;
-}
-
-.source-bar.trends { background: #8b5cf6; }
-.source-bar.youtube { background: #ef4444; }
-.source-bar.sentiment { background: #3b82f6; }
-
-/* ============================================
-   DETAIL PANEL (Right Panel)
-   ============================================ */
-
-.detail-panel {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    padding: var(--spacing-lg);
-    overflow-y: auto;
-    max-height: calc(100vh - 200px);
-}
-
-.empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    text-align: center;
-    color: var(--text-muted);
-    padding: var(--spacing-xl);
-}
-
-.empty-icon {
-    font-size: 4rem;
-    margin-bottom: var(--spacing-md);
-    opacity: 0.5;
-}
-
-.empty-state h3 {
-    font-size: 1.3rem;
-    margin-bottom: var(--spacing-sm);
-    color: var(--text-primary);
-}
-
-.candidate-detail {
-    animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes slideIn {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-}
-
-@keyframes slideOut {
-    from { transform: translateX(0); opacity: 1; }
-    to { transform: translateX(100%); opacity: 0; }
-}
-
-.detail-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: var(--spacing-lg);
-    padding-bottom: var(--spacing-md);
-    border-bottom: 1px solid var(--border-color);
-}
-
-.detail-title h2 {
-    font-size: 1.6rem;
-    margin-bottom: 0.25rem;
-}
-
-.detail-party {
-    color: var(--text-secondary);
-    font-size: 1rem;
-}
-
-.detail-momentum {
-    text-align: right;
-}
-
-.detail-momentum .value {
-    font-size: 2.5rem;
-    font-weight: 700;
-    display: block;
-}
-
-.detail-momentum .change {
-    font-size: 0.9rem;
-    padding: 0.2rem 0.6rem;
-    border-radius: 12px;
-    display: inline-block;
-    margin-top: 0.25rem;
-}
-
-/* Sources breakdown */
-.sources-section {
-    margin-bottom: var(--spacing-lg);
-}
-
-.sources-section h3 {
-    font-size: 1rem;
-    color: var(--text-secondary);
-    margin-bottom: var(--spacing-sm);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.sources-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--spacing-sm);
-}
-
-.source-item {
-    background: var(--bg-secondary);
-    padding: var(--spacing-sm);
-    border-radius: var(--border-radius);
-    text-align: center;
-}
-
-.source-label {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    margin-bottom: 0.25rem;
-}
-
-.source-value {
-    font-size: 1.3rem;
-    font-weight: 600;
-}
-
-.source-bar-container {
-    margin-top: 0.5rem;
-    height: 4px;
-    background: var(--bg-tertiary);
-    border-radius: 2px;
-    overflow: hidden;
-}
-
-.source-bar-fill {
-    height: 100%;
-    border-radius: 2px;
-    transition: width 0.5s ease;
-}
-
-/* Sentiment breakdown */
-.sentiment-section {
-    margin-bottom: var(--spacing-lg);
-}
-
-.sentiment-bars {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-xs);
-    margin-top: var(--spacing-sm);
-}
-
-.sentiment-bar-row {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-}
-
-.sentiment-label {
-    width: 80px;
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-}
-
-.sentiment-track {
-    flex: 1;
-    height: 8px;
-    background: var(--bg-tertiary);
-    border-radius: 4px;
-    overflow: hidden;
-    display: flex;
-}
-
-.sentiment-fill {
-    height: 100%;
-    transition: width 0.5s ease;
-}
-
-.sentiment-fill.positive { background: #10b981; }
-.sentiment-fill.neutral { background: #6b7280; }
-.sentiment-fill.negative { background: #ef4444; }
-
-.sentiment-value {
-    width: 40px;
-    font-size: 0.85rem;
-    text-align: right;
-    color: var(--text-primary);
-}
-
-/* News section */
-.news-section h3 {
-    font-size: 1rem;
-    color: var(--text-secondary);
-    margin-bottom: var(--spacing-sm);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.news-list {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-sm);
-}
-
-.news-item {
-    padding: var(--spacing-sm);
-    background: var(--bg-secondary);
-    border-radius: var(--border-radius);
-    border-left: 3px solid var(--text-accent);
-    font-size: 0.9rem;
-    line-height: 1.4;
-}
-
-/* ============================================
-   MODAL
-   ============================================ */
-
-.modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    padding: var(--spacing-md);
-}
-
-.modal[open] {
-    display: flex;
-}
-
-.modal-content {
-    background: var(--bg-card);
-    border-radius: var(--border-radius);
-    padding: var(--spacing-xl);
-    max-width: 600px;
-    width: 100%;
-    max-height: 90vh;
-    overflow-y: auto;
-    box-shadow: var(--shadow-lg);
-}
-
-.modal-content h2 {
-    margin-bottom: var(--spacing-md);
-}
-
-.methodology-box {
-    margin-bottom: var(--spacing-lg);
-}
-
-.methodology-box h3 {
-    color: var(--text-accent);
-    margin: var(--spacing-md) 0 var(--spacing-sm);
-}
-
-.methodology-box ul {
-    padding-left: var(--spacing-lg);
-}
-
-.methodology-box li {
-    margin-bottom: var(--spacing-xs);
-}
-
-.close-btn {
-    width: 100%;
-    padding: var(--spacing-sm);
-    background: var(--text-accent);
-    color: white;
-    border: none;
-    border-radius: var(--border-radius);
-    font-size: 1rem;
-    cursor: pointer;
-    transition: opacity 0.2s;
-}
-
-.close-btn:hover {
-    opacity: 0.9;
-}
-
-/* ============================================
-   RESPONSIVE
-   ============================================ */
-
-@media (max-width: 600px) {
-    .header {
-        padding: var(--spacing-sm) var(--spacing-md);
-    }
-
-    .logo {
-        font-size: 1.4rem;
-    }
-
-    .main {
-        padding: var(--spacing-sm);
-    }
-
-    .controls {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .stats {
-        text-align: center;
-        margin-left: 0;
-        margin-top: var(--spacing-xs);
-    }
-
-    .sources-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .detail-momentum .value {
-        font-size: 2rem;
-    }
-}
-
-
-/* ============================================
-   SECTION HEADERS & DIVIDERS
-   ============================================ */
-
-.section-header {
-    margin-bottom: 1rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 2px solid var(--border-color);
-}
-
-.section-header h3 {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin: 0 0 0.25rem 0;
-}
-
-.section-subtitle {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    margin: 0;
-}
-
-.section-divider {
-    border: none;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, var(--border-color), transparent);
-    margin: 2rem 0;
-}
-
-/* ============================================
-   ANÁLISIS ELECTORAL & PREDICCIÓN
-   ============================================ */
-
-.analysis-section {
-    margin-bottom: var(--spacing-xl);
-}
-
-.analysis-header {
+.runoff-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -760,20 +175,23 @@ body {
     border-bottom: 2px solid var(--border-color);
 }
 
-.analysis-header h2 {
+.runoff-header h2 {
     font-size: 1.75rem;
     font-weight: 700;
-    color: var(--text-primary);
+    background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     margin: 0;
 }
 
-.analysis-meta {
+.runoff-meta {
     display: flex;
     align-items: center;
-    gap: var(--spacing-md);
+    gap: var(--spacing-sm);
 }
 
-.analysis-meta span {
+.runoff-meta span {
     font-size: 0.9rem;
     color: var(--text-secondary);
 }
@@ -803,7 +221,10 @@ body {
     cursor: not-allowed;
 }
 
-/* Prediction Panel */
+/* ============================================
+   PREDICTION PANEL
+   ============================================ */
+
 .prediction-panel {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -816,14 +237,14 @@ body {
     font-size: 1.5rem;
     font-weight: 700;
     color: var(--text-primary);
-    margin: 0 0 var(--spacing-md) 0;
+    margin: 0 0 var(--spacing-lg) 0;
     text-align: center;
 }
 
 .prediction-bars {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-md);
+    gap: var(--spacing-lg);
 }
 
 .prediction-bar-item {
@@ -834,36 +255,46 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
 }
 
 .prediction-bar-label {
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     font-weight: 600;
     color: var(--text-primary);
 }
 
 .prediction-bar-value {
-    font-size: 1.25rem;
+    font-size: 1.5rem;
     font-weight: 700;
     color: var(--text-accent);
 }
 
 .prediction-bar-track {
-    height: 24px;
+    height: 32px;
     background: var(--bg-tertiary);
-    border-radius: 12px;
+    border-radius: 16px;
     overflow: hidden;
     position: relative;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .prediction-bar-fill {
     height: 100%;
     width: 0%;
-    background: var(--bar-color, #8b5cf6);
     transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: 12px;
+    border-radius: 16px;
     position: relative;
+}
+
+.prediction-bar-fill.abelardo {
+    background: linear-gradient(90deg, #8b5cf6, #7c3aed);
+    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.4);
+}
+
+.prediction-bar-fill.cepeda {
+    background: linear-gradient(90deg, #3b82f6, #2563eb);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
 }
 
 .prediction-bar-fill::after {
@@ -877,190 +308,80 @@ body {
 }
 
 .prediction-notes {
-    margin-top: var(--spacing-md);
+    margin-top: var(--spacing-lg);
     padding-top: var(--spacing-md);
     border-top: 1px solid var(--border-color);
     text-align: center;
     color: var(--text-muted);
     font-size: 0.85rem;
+    line-height: 1.5;
 }
 
-/* Candidates Grid */
-.candidates-detail-section {
-    margin-bottom: var(--spacing-xl);
-}
+/* ============================================
+   METRICS GRID
+   ============================================ */
 
-.grid-title {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: var(--spacing-md);
-    padding-bottom: var(--spacing-sm);
-    border-bottom: 2px solid var(--border-color);
-}
-
-.candidates-grid {
+.metrics-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: var(--spacing-md);
+    margin-top: var(--spacing-lg);
 }
 
-.candidate-grid-card {
+.metric-card {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 12px;
     padding: var(--spacing-md);
-    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-    border-left: 4px solid var(--card-accent, var(--text-accent));
+    border-left: 4px solid var(--metric-color, var(--text-accent));
 }
 
-.candidate-grid-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-md);
-    border-color: var(--text-accent);
-}
-
-.grid-header {
+.metric-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: var(--spacing-sm);
 }
 
-.grid-name {
+.metric-name {
     font-size: 1.1rem;
     font-weight: 600;
     color: var(--text-primary);
-    flex: 1;
 }
 
-.grid-pct {
+.metric-party {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+}
+
+.metric-value {
     font-size: 1.5rem;
     font-weight: 700;
-    color: var(--text-accent);
-    margin-left: var(--spacing-sm);
+    color: var(--metric-color, var(--text-accent));
 }
 
-.grid-detail {
+.metric-details {
     display: flex;
-    gap: var(--spacing-md);
+    flex-direction: column;
+    gap: 0.5rem;
     font-size: 0.85rem;
     color: var(--text-secondary);
 }
 
-.grid-detail small {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-}
-
-/* Candidates Section */
-.candidates-section {
-    margin-top: var(--spacing-xl);
-}
-
-.candidates-section h2 {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: var(--spacing-md);
-    padding-bottom: var(--spacing-sm);
-    border-bottom: 2px solid var(--border-color);
-}
-
-.candidates-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: var(--spacing-md);
-}
-
-.candidate-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: var(--spacing-md);
-    cursor: pointer;
-    transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-sm);
-}
-
-.candidate-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-    border-color: var(--text-accent);
-}
-
-.candidate-card.active {
-    border-color: var(--text-accent);
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3);
-}
-
-.candidate-info {
+.metric-details div {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
 }
 
-.candidate-name {
-    font-size: 1.1rem;
-    font-weight: 600;
+.metric-details strong {
     color: var(--text-primary);
 }
 
-.candidate-party {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-}
+/* ============================================
+   MODAL
+   ============================================ */
 
-.candidate-metrics {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-xs);
-}
-
-.momentum-badge {
-    font-size: 1.4rem;
-    font-weight: 700;
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    background: var(--bg-tertiary);
-    align-self: flex-start;
-}
-
-.momentum-up { color: #10b981; }
-.momentum-down { color: #ef4444; }
-
-.change-indicator {
-    font-size: 0.85rem;
-    padding: 0.15rem 0.5rem;
-    border-radius: 12px;
-    background: var(--bg-tertiary);
-    align-self: flex-start;
-}
-
-.change-positive { color: #10b981; }
-.change-negative { color: #ef4444; }
-
-.source-bars {
-    display: flex;
-    gap: 4px;
-    margin-top: var(--spacing-xs);
-}
-
-.source-bar {
-    width: 8px;
-    height: 20px;
-    border-radius: 2px;
-    opacity: 0.7;
-}
-
-.source-bar.trends { background: #8b5cf6; }
-.source-bar.youtube { background: #ef4444; }
-.source-bar.sentiment { background: #3b82f6; }
-
-/* Modal */
 .modal {
     border: none;
     border-radius: 12px;
@@ -1144,26 +465,6 @@ body {
    RESPONSIVE
    ============================================ */
 
-@media (max-width: 900px) {
-    .dashboard-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .analysis-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--spacing-sm);
-    }
-
-    .candidates-list {
-        grid-template-columns: 1fr;
-    }
-
-    .candidates-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
 @media (max-width: 600px) {
     .header {
         padding: var(--spacing-sm) var(--spacing-md);
@@ -1177,15 +478,40 @@ body {
         padding: var(--spacing-sm);
     }
 
-    .prediction-panel {
-        padding: var(--spacing-md);
+    .runoff-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-sm);
     }
 
-    .prediction-bar-value {
-        font-size: 1.1rem;
+    .metrics-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .prediction-bar-track {
+        height: 24px;
     }
 
     .modal {
         width: 95%;
     }
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
