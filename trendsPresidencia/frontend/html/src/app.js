@@ -1,6 +1,6 @@
 /**
  * trendsPresidencia — App principal
- * Funcionalidad: búsqueda, filtrado, detalle de candidatos
+ * Funcionalidad: pronóstico segunda vuelta, desglose candidatos, lista candidatos
  * Sin dependencias, vanilla JS
  */
 
@@ -9,9 +9,7 @@
 // ============================================
 
 let allCandidates = [];
-let filteredCandidates = [];
-let selectedCandidateId = null;
-let currentCategory = 'Todos';
+let runoffForecast = null;
 
 // ============================================
 // INIT
@@ -19,10 +17,10 @@ let currentCategory = 'Todos';
 
 document.addEventListener('DOMContentLoaded', async () => {
     await loadData();
-    initUI();
-    renderList();
-    setupEventListeners();
     await loadRunoffForecast();
+    renderCandidatesGrid();
+    renderCandidatesList();
+    setupEventListeners();
 });
 
 // ============================================
@@ -39,64 +37,35 @@ const API_BASE_URL = window.location.hostname === 'localhost' || window.location
 
 async function loadData() {
     try {
-        // Intentar cargar desde API primero
         const response = await fetch(`${API_BASE_URL}/api/v1/candidates`);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
-        allCandidates = data.candidates.map((c, idx) => ({
+        allCandidates = data.candidates.map(c => ({
             ...c,
             id: c.id || c.name.toLowerCase().replace(/\s+/g, '-'),
+            momentum: c.momentum || 0,
             change_24h: c.change_24h || 0,
-            color: c.color || '#3b82f6'
+            color: c.color || '#3b82f6',
+            sources: c.sources || { google_trends: 0, youtube: 0, sentiment: 0 }
         }));
-        filteredCandidates = [...allCandidates];
 
-        // Actualizar última actualización
-        const updateFreqEl = document.getElementById('updateFreq');
-        if (updateFreqEl) updateFreqEl.textContent = '6h';
-
-        console.log(`✅ Cargados ${allCandidates.length} candidatos desde API`);
+        console.log(`✅ Cargados ${allCandidates.length} candidatos`);
     } catch (error) {
         console.warn('⚠️ API no disponible, cargando datos estáticos:', error.message);
-        // Fallback a JSON estático
         try {
             const response = await fetch('data/candidates.json');
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const data = await response.json();
-            allCandidates = data.candidates;
-            filteredCandidates = [...allCandidates];
+            allCandidates = data.candidates.map(c => ({
+                ...c,
+                id: c.id || c.name.toLowerCase().replace(/\s+/g, '-')
+            }));
             console.log(`✅ Cargados ${allCandidates.length} candidatos desde JSON estático`);
         } catch (fallbackError) {
-            console.error('❌ Error cargando datos estáticos:', fallbackError);
-            showError('No se pudieron cargar los datos. Verifica la conexión.');
+            console.error('❌ Error cargando datos:', fallbackError);
         }
     }
 }
-
-// ============================================
-// UI INITIALIZATION
-// ============================================
-
-function initUI() {
-    const categoryFilter = document.getElementById('categoryFilter');
-    if (!categoryFilter) return;
-
-    // Obtener categorías únicas desde los datos
-    const categories = ['Todos'];
-    allCandidates.forEach(c => {
-        if (!categories.includes(c.party)) categories.push(c.party);
-    });
-
-    // Populate select
-    categoryFilter.innerHTML = categories
-        .map(cat => `<option value="${cat}">${cat}</option>`)
-        .join('');
-
-    // Set initial category
-    currentCategory = 'Todos';
-    categoryFilter.value = 'Todos';
-}
-
 
 // ============================================
 // RUNOFF FORECAST
@@ -107,46 +76,136 @@ async function loadRunoffForecast() {
         const response = await fetch(`${API_BASE_URL}/api/v1/runoff/forecast`);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const forecast = await response.json();
-        
+
         if (forecast.error || !forecast.predictions) {
-            console.warn('⚠️ No hay pronóstico de segunda vuelta disponible');
-            document.getElementById('runoffForecast').style.display = 'none';
+            console.warn('⚠️ No hay pronóstico de segunda vuelta');
+            hidePredictionPanel();
             return;
         }
-        
-        // Mostrar sección
-        const section = document.getElementById('runoffForecast');
-        section.style.display = 'block';
-        
-        // Actualizar datos
-        const abelardoPct = forecast.predictions['Abelardo de la Espriella'] || 0;
-        const cepedaPct = forecast.predictions['Iván Cepeda'] || 0;
-        
-        document.getElementById('forecastAbelardoPct').textContent = `${abelardoPct}%`;
-        document.getElementById('forecastCepedaPct').textContent = `${cepedaPct}%`;
-        
-        // Actualizar barras
-        document.getElementById('forecastAbelardoBar').style.width = `${abelardoPct}%`;
-        document.getElementById('forecastCepedaBar').style.width = `${cepedaPct}%`;
-        
-        // Actualizar timestamp
-        if (forecast.timestamp) {
-            const date = new Date(forecast.timestamp);
-            document.getElementById('forecastTimestamp').textContent = 
-                `Actualizado: ${date.toLocaleTimeString('es-CO')}`;
-        }
-        
-        // Actualizar metodología
-        if (forecast.methodology) {
-            document.getElementById('forecastMethodology').textContent = forecast.methodology;
-        }
-        
-        console.log('✅ Pronóstico de segunda vuelta cargado:', forecast);
-        
+
+        runoffForecast = forecast;
+        showPredictionPanel(forecast);
+        updateLastUpdate(forecast.timestamp);
+        console.log('✅ Pronóstico de segunda vuelta cargado');
     } catch (error) {
-        console.error('Error cargando pronóstico de segunda vuelta:', error);
-        document.getElementById('runoffForecast').style.display = 'none';
+        console.error('Error cargando pronóstico:', error);
+        hidePredictionPanel();
     }
+}
+
+function showPredictionPanel(forecast) {
+    const abelardo = forecast.predictions['Abelardo de la Espriella'] || 0;
+    const cepeda = forecast.predictions['Iván Cepeda'] || 0;
+
+    document.getElementById('abelardoPct').textContent = `${abelardo}%`;
+    document.getElementById('cepedaPct').textContent = `${cepeda}%`;
+    document.getElementById('abelardoBar').style.width = `${abelardo}%`;
+    document.getElementById('cepedaBar').style.width = `${cepeda}%`;
+    document.getElementById('predictionPanel').style.display = 'block';
+}
+
+function hidePredictionPanel() {
+    document.getElementById('predictionPanel').style.display = 'none';
+}
+
+function updateLastUpdate(timestamp) {
+    const el = document.getElementById('analysisLastUpdate');
+    if (el && timestamp) {
+        const date = new Date(timestamp);
+        el.textContent = `Actualizado: ${date.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+    }
+}
+
+// ============================================
+// RENDER CANDIDATES GRID (Desglose)
+// ============================================
+
+function renderCandidatesGrid() {
+    const grid = document.getElementById('candidatesGrid');
+    if (!grid) return;
+
+    // Solo mostrar Abelardo y Cepeda en el desglose de segunda vuelta
+    const mainCandidates = allCandidates.filter(c =>
+        c.name.includes('Abelardo') || c.name.includes('Cepeda')
+    );
+
+    if (mainCandidates.length === 0) {
+        grid.innerHTML = '<p style="color: var(--text-muted); text-align: center;">No hay datos disponibles</p>';
+        return;
+    }
+
+    grid.innerHTML = mainCandidates.map(candidate => `
+        <div class="candidate-grid-card" style="--card-accent: ${candidate.color}">
+            <div class="grid-header">
+                <span class="grid-name">${candidate.name}</span>
+                <span class="grid-pct" style="color: ${candidate.color}">${candidate.momentum.toFixed(1)}%</span>
+            </div>
+            <div class="grid-detail">
+                <small>Momentum: ${candidate.momentum.toFixed(1)}%</small>
+                <small>Cambio 24h: ${candidate.change_24h >= 0 ? '▲' : '▼'} ${Math.abs(candidate.change_24h).toFixed(1)}%</small>
+            </div>
+        </div>
+    `).join('');
+}
+
+// ============================================
+// RENDER CANDIDATES LIST
+// ============================================
+
+function renderCandidatesList() {
+    const list = document.getElementById('candidateList');
+    if (!list) return;
+
+    if (allCandidates.length === 0) {
+        list.innerHTML = `
+            <div class="empty-state" style="grid-column: 1 / -1; padding: 3rem;">
+                <div class="empty-icon">🔍</div>
+                <h3>No hay candidatos disponibles</h3>
+            </div>
+        `;
+        return;
+    }
+
+    list.innerHTML = allCandidates.map(candidate => {
+        const changeClass = candidate.change_24h >= 0 ? 'change-positive' : 'change-negative';
+        const changeIcon = candidate.change_24h >= 0 ? '▲' : '▼';
+        const changeValue = Math.abs(candidate.change_24h).toFixed(1);
+
+        return `
+            <div class="candidate-card" onclick="selectCandidate('${candidate.id}')">
+                <div class="candidate-info">
+                    <div class="candidate-name">${candidate.name}</div>
+                    <div class="candidate-party">${candidate.party}</div>
+                </div>
+                <div class="candidate-metrics">
+                    <div class="momentum-badge" style="color: ${candidate.color}">
+                        ${candidate.momentum.toFixed(1)}%
+                    </div>
+                    <div class="change-indicator ${changeClass}">
+                        ${changeIcon} ${changeValue}% (24h)
+                    </div>
+                    <div class="source-bars">
+                        <div class="source-bar trends" title="Google Trends: ${candidate.sources?.google_trends || 0}"></div>
+                        <div class="source-bar youtube" title="YouTube: ${candidate.sources?.youtube || 0}"></div>
+                        <div class="source-bar sentiment" title="Sentimiento: ${candidate.sources?.sentiment || 0}"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// ============================================
+// CANDIDATE SELECTION (para futura expansión)
+// ============================================
+
+function selectCandidate(candidateId) {
+    // Por ahora solo marca como activo
+    const candidate = allCandidates.find(c => c.id === candidateId);
+    if (!candidate) return;
+
+    console.log('Candidato seleccionado:', candidate.name);
+    // Aquí se puede expandir para mostrar detalles en un modal o panel
 }
 
 // ============================================
@@ -154,23 +213,11 @@ async function loadRunoffForecast() {
 // ============================================
 
 function setupEventListeners() {
-    // Search input (debounced)
-    const searchInput = document.getElementById('searchInput');
-    let debounceTimer;
-    searchInput.addEventListener('input', (e) => {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-            filterCandidates(e.target.value, currentCategory);
-        }, 200);
-    });
-
-    // Category filter
-    const categoryFilter = document.getElementById('categoryFilter');
-    categoryFilter.addEventListener('change', (e) => {
-        currentCategory = e.target.value;
-        const searchValue = document.getElementById('searchInput').value;
-        filterCandidates(searchValue, currentCategory);
-    });
+    // Refresh button
+    const refreshBtn = document.querySelector('.refresh-btn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', handleRefresh);
+    }
 
     // Methodology modal
     const modal = document.getElementById('methodologyModal');
@@ -193,67 +240,44 @@ function setupEventListeners() {
             if (e.target === modal) modal.close();
         });
     }
-
-    // Refresh button
-    const refreshBtn = document.getElementById('refreshBtn');
-    if (refreshBtn) {
-        refreshBtn.addEventListener('click', handleRefresh);
-    }
 }
 
 // ============================================
-// REFRESH FUNCTIONALITY
+// REFRESH
 // ============================================
 
 async function handleRefresh() {
-    const refreshBtn = document.getElementById('refreshBtn');
+    const refreshBtn = document.querySelector('.refresh-btn');
     if (!refreshBtn) return;
 
-    // Disable button and show loading state
     refreshBtn.disabled = true;
-    refreshBtn.classList.add('loading');
     refreshBtn.textContent = '🔄 Actualizando...';
 
     try {
-        // Llamar al endpoint de refresh del backend
         const response = await fetch('/api/v1/candidates/refresh', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' }
         });
 
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
         const data = await response.json();
-
-        // Recargar datos después del refresh exitoso
         await loadData();
-        renderList();
+        renderCandidatesGrid();
+        renderCandidatesList();
+        await loadRunoffForecast();
 
-        // Mostrar notificación de éxito
-        showNotification(`✅ Datos actualizados: ${data.refreshed} candidatos`);
-
-        // Actualizar timestamp si existe
-        const updateTimeEl = document.getElementById('updateTime');
-        if (updateTimeEl) {
-            updateTimeEl.textContent = new Date().toLocaleTimeString('es-CO');
-        }
+        showNotification('✅ Datos actualizados correctamente');
     } catch (error) {
-        console.error('Error refrescando datos:', error);
+        console.error('Error:', error);
         showNotification(`❌ Error: ${error.message}`, 'error');
     } finally {
-        // Restore button state
         refreshBtn.disabled = false;
-        refreshBtn.classList.remove('loading');
-        refreshBtn.textContent = '🔄 Refrescar';
+        refreshBtn.textContent = '🔄 Actualizar';
     }
 }
 
 function showNotification(message, type = 'success') {
-    // Crear notificación temporal
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
     notification.textContent = message;
@@ -268,238 +292,17 @@ function showNotification(message, type = 'success') {
         box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         z-index: 2000;
         animation: slideIn 0.3s ease;
+        font-size: 0.9rem;
     `;
 
     document.body.appendChild(notification);
 
-    // Remover después de 3 segundos
     setTimeout(() => {
         notification.style.animation = 'slideOut 0.3s ease';
         setTimeout(() => notification.remove(), 300);
     }, 3000);
 }
 
-// ============================================
-// FILTERING LOGIC
-// ============================================
-
-function filterCandidates(searchQuery, category) {
-    const query = searchQuery.toLowerCase().trim();
-
-    filteredCandidates = allCandidates.filter(candidate => {
-        // Category filter
-        const matchesCategory = category === 'Todos' || candidate.party === category;
-
-        // Search filter (name, party, description)
-        const matchesSearch = !query ||
-            candidate.name.toLowerCase().includes(query) ||
-            candidate.party.toLowerCase().includes(query) ||
-            candidate.description.toLowerCase().includes(query);
-
-        return matchesCategory && matchesSearch;
-    });
-
-    renderList();
-}
-
-// ============================================
-// RENDERING
-// ============================================
-
-function renderList() {
-    const listContainer = document.getElementById('candidateList');
-    const statsEl = document.getElementById('resultStats');
-
-    if (!listContainer) return;
-
-    // Update stats
-    statsEl.textContent = `Mostrando ${filteredCandidates.length} candidato${filteredCandidates.length !== 1 ? 's' : ''}`;
-
-    // Clear list
-    listContainer.innerHTML = '';
-
-    if (filteredCandidates.length === 0) {
-        listContainer.innerHTML = `
-            <div class="empty-state" style="grid-column: 1 / -1; padding: 3rem;">
-                <div class="empty-icon">🔍</div>
-                <h3>No se encontraron candidatos</h3>
-                <p>Intenta con otros términos de búsqueda o ajusta el filtro de categoría.</p>
-            </div>
-        `;
-        return;
-    }
-
-    // Render each candidate card
-    filteredCandidates.forEach(candidate => {
-        const card = document.createElement('div');
-        card.className = `candidate-card ${selectedCandidateId === candidate.id ? 'active' : ''}`;
-        card.onclick = () => selectCandidate(candidate.id);
-
-        const changeClass = candidate.change_24h >= 0 ? 'change-positive' : 'change-negative';
-        const changeIcon = candidate.change_24h >= 0 ? '▲' : '▼';
-        const changeValue = Math.abs(candidate.change_24h).toFixed(1);
-
-        card.innerHTML = `
-            <div class="candidate-info">
-                <div class="candidate-name">${candidate.name}</div>
-                <div class="candidate-party">${candidate.party}</div>
-            </div>
-            <div class="candidate-metrics">
-                <div class="momentum-badge" style="color: ${candidate.color}">
-                    ${candidate.momentum.toFixed(1)}%
-                </div>
-                <div class="change-indicator ${changeClass}">
-                    ${changeIcon} ${changeValue}% (24h)
-                </div>
-                <div class="source-bars">
-                    <div class="source-bar trends" title="Google Trends: ${candidate.sources?.google_trends || 0}"></div>
-                    <div class="source-bar youtube" title="YouTube: ${candidate.sources?.youtube || 0}"></div>
-                    <div class="source-bar sentiment" title="Sentimiento: ${candidate.sources?.sentiment || 0}"></div>
-                </div>
-            </div>
-        `;
-
-        listContainer.appendChild(card);
-    });
-}
-
-// ============================================
-// CANDIDATE SELECTION & DETAIL
-// ============================================
-
-function selectCandidate(candidateId) {
-    selectedCandidateId = candidateId;
-    renderList(); // Re-render to update active state
-
-    const candidate = allCandidates.find(c => c.id === candidateId);
-    if (!candidate) return;
-
-    renderDetail(candidate);
-}
-
-function renderDetail(candidate) {
-    const emptyState = document.getElementById('emptyState');
-    const detailPanel = document.getElementById('candidateDetail');
-
-    emptyState.style.display = 'none';
-    detailPanel.style.display = 'block';
-
-    const changeClass = candidate.change_24h >= 0 ? 'momentum-up' : 'momentum-down';
-    const changeIcon = candidate.change_24h >= 0 ? '▲' : '▼';
-    const changeValue = Math.abs(candidate.change_24h).toFixed(1);
-
-    // Normalize source values for bars (0-100 scale assumed)
-    const maxVal = 100;
-    const trendsPct = (candidate.sources.google_trends / maxVal) * 100;
-    const ytPct = (candidate.sources.youtube / maxVal) * 100;
-    const sentPct = candidate.sources.sentiment; // Ya está en porcentaje 0-100
-
-    // Sentiment breakdown
-    const sentimentData = candidate.sentiment_breakdown || { positive: 0, neutral: 0, negative: 0 };
-    const { positive, neutral, negative } = sentimentData;
-    const total = positive + neutral + negative;
-
-    detailPanel.innerHTML = `
-        <div class="detail-header">
-            <div class="detail-title">
-                <h2>${candidate.name}</h2>
-                <div class="detail-party">${candidate.party}</div>
-            </div>
-            <div class="detail-momentum">
-                <span class="value" style="color: ${candidate.color}">
-                    ${candidate.momentum.toFixed(1)}%
-                </span>
-                <div class="change ${changeClass}">
-                    ${changeIcon} ${changeValue}% (24h)
-                </div>
-            </div>
-        </div>
-
-        <div class="sources-section">
-            <h3>Desglose por Fuente</h3>
-            <div class="sources-grid">
-                <div class="source-item">
-                    <div class="source-label">Google Trends</div>
-                    <div class="source-value" style="color: #8b5cf6">${candidate.sources.google_trends}</div>
-                    <div class="source-bar-container">
-                        <div class="source-bar-fill trends" style="width: ${trendsPct}%"></div>
-                    </div>
-                </div>
-                <div class="source-item">
-                    <div class="source-label">YouTube</div>
-                    <div class="source-value" style="color: #ef4444">${candidate.sources.youtube}</div>
-                    <div class="source-bar-container">
-                        <div class="source-bar-fill youtube" style="width: ${ytPct}%"></div>
-                    </div>
-                </div>
-                <div class="source-item">
-                    <div class="source-label">Sentimiento</div>
-                    <div class="source-value" style="color: #3b82f6">${candidate.sources.sentiment.toFixed(1)}%</div>
-                    <div class="source-bar-container">
-                        <div class="source-bar-fill sentiment" style="width: ${sentPct}%"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="sentiment-section">
-            <h3>Distribución de Sentimiento</h3>
-            <div class="sentiment-bars">
-                <div class="sentiment-bar-row">
-                    <span class="sentiment-label">Positivo</span>
-                    <div class="sentiment-track">
-                        <div class="sentiment-fill positive" style="width: ${positive}%"></div>
-                    </div>
-                    <span class="sentiment-value">${positive}%</span>
-                </div>
-                <div class="sentiment-bar-row">
-                    <span class="sentiment-label">Neutral</span>
-                    <div class="sentiment-track">
-                        <div class="sentiment-fill neutral" style="width: ${neutral}%"></div>
-                    </div>
-                    <span class="sentiment-value">${neutral}%</span>
-                </div>
-                <div class="sentiment-bar-row">
-                    <span class="sentiment-label">Negativo</span>
-                    <div class="sentiment-track">
-                        <div class="sentiment-fill negative" style="width: ${negative}%"></div>
-                    </div>
-                    <span class="sentiment-value">${negative}%</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="news-section">
-            <h3>📰 Noticias Relevantes</h3>
-            <div class="news-list">
-                ${candidate.top_news.map(news => `
-                    <div class="news-item">${news}</div>
-                `).join('')}
-            </div>
-        </div>
-
-        <div class="description-section">
-            <h3>📝 Resumen</h3>
-            <p style="color: var(--text-secondary); line-height: 1.6;">
-                ${candidate.description}
-            </p>
-        </div>
-    `;
-}
-
-// ============================================
-// ERROR HANDLING
-// ============================================
-
-function showError(message) {
-    const listContainer = document.getElementById('candidateList');
-    if (listContainer) {
-        listContainer.innerHTML = `
-            <div class="empty-state" style="grid-column: 1 / -1;">
-                <div class="empty-icon">⚠️</div>
-                <h3>Error</h3>
-                <p>${message}</p>
-            </div>
-        `;
-    }
-}
+// Inicializar después de que todas las funciones estén definidas
+window.selectCandidate = selectCandidate;
+window.refreshAnalysis = handleRefresh;
