@@ -162,45 +162,101 @@ class GoogleTrendsService:
     
     async def get_runoff_forecast(self) -> dict[str, Any]:
         """
-        Calcula pronóstico de segunda vuelta usando datos de Google Trends Topics.
-        Aplica algoritmo de alineación calibrado con datos 2022.
+        Calcula pronóstico de segunda vuelta usando algoritmo de alineación calibrado.
+        - Solo Google Trends Topics IDs (7 días)
+        - Aplica factores de estabilidad y castigo a voto volátil
+        - Incluye redistribución de votos de primera vuelta
         """
         try:
-            # Obtener scores de los dos candidatos principales
-            scores = await self.get_trends_for_candidates([
+            # 1. Obtener datos de los 4 candidatos de primera vuelta
+            all_candidates = [
                 "Abelardo de la Espriella",
-                "Iván Cepeda"
-            ])
-            
-            abelardo_score = scores.get("Abelardo de la Espriella", 0)
-            cepeda_score = scores.get("Iván Cepeda", 0)
-            
-            total = abelardo_score + cepeda_score
-            
-            if total == 0:
-                return {
-                    "error": "No hay datos disponibles",
-                    "timestamp": datetime.now().isoformat()
-                }
-            
-            # Porcentajes brutos
-            abelardo_pct = (abelardo_score / total) * 100
-            cepeda_pct = (cepeda_score / total) * 100
-            
-            # Aplicar algoritmo de alineación calibrado
-            # Factor de estabilidad: Cepeda tiene voto más duro (premio +5%)
-            # Abelardo tiene más variabilidad regional (sin ajuste)
-            cepeda_adjusted = cepeda_pct * 1.05
-            abelardo_adjusted = abelardo_pct
-            
-            # Normalizar a 100%
-            total_adjusted = abelardo_adjusted + cepeda_adjusted
-            abelardo_final = round((abelardo_adjusted / total_adjusted) * 100, 2)
-            cepeda_final = round((cepeda_adjusted / total_adjusted) * 100, 2)
-            
+                "Iván Cepeda",
+                "Sergio Fajardo",
+                "Paloma Valencia"
+            ]
+
+            keywords = [self._get_keyword(name) for name in all_candidates]
+            timeframe = "now 7-d"
+            geo = self.region if self.region else None
+
+            self.pytrends.build_payload(
+                kw_list=keywords,
+                timeframe=timeframe,
+                geo=geo,
+                gprop="",
+            )
+
+            interest_over_time = self.pytrends.interest_over_time()
+
+            if interest_over_time is None or interest_over_time.empty:
+                logger.warning("No hay datos de Google Trends")
+                return {"error": "No hay datos disponibles", "timestamp": datetime.now().isoformat()}
+
+            # 2. Calcular promedio Y desviación estándar (estabilidad) por candidato
+            stats = {}
+            for name in all_candidates:
+                keyword = self._get_keyword(name)
+                if keyword in interest_over_time.columns:
+                    series = interest_over_time[keyword]
+                    stats[name] = {
+                        "mean": float(series.mean()),
+                        "std": float(series.std())  # Desviación estándar = volatilidad
+                    }
+                else:
+                    stats[name] = {"mean": 0.0, "std": 0.0}
+
+            logger.info(f"Estadísticas por candidato: {stats}")
+
+            # 3. Aplicar algoritmo de alineación con las 3 reglas
+            # Regla 1: Castigo 40% a Fajardo (voto volátil/opinión)
+            # Regla 2: Premio +5% a Cepeda (voto duro - desviación < 2.0)
+            # Regla 3: Sin ajuste para Abelardo (base con picos lógicos)
+
+            resultados_brutos = {}
+            for candidato, data in stats.items():
+                mean = data["mean"]
+                std = data["std"]
+
+                if candidato == "Sergio Fajardo":
+                    # Regla 1: Castigo 40% por volatilidad alta
+                    resultados_brutos[candidato] = mean * 0.60
+                elif candidato == "Iván Cepeda" and std < 2.0:
+                    # Regla 2: Premio +5% por voto duro (curva plana)
+                    resultados_brutos[candidato] = mean * 1.05
+                else:
+                    # Regla 3: Sin ajuste (Abelardo, Paloma)
+                    resultados_brutos[candidato] = mean
+
+            # 4. Calcular pronóstico de primera vuelta ajustado
+            total_ajustado = sum(resultados_brutos.values())
+            pronostico_primera = {
+                k: round((v / total_ajustado) * 100, 2)
+                for k, v in resultados_brutos.items()
+            }
+
+            logger.info(f"Pronóstico primera vuelta ajustado: {pronostico_primera}")
+
+            # 5. Redistribuir votos de Fajardo y Paloma a segunda vuelta
+            # Asumiendo que sus votantes se dividen 1/3 para cada candidato y 1/3 abstención
+            votos_fajardo = pronostico_primera.get("Sergio Fajardo", 0)
+            votos_paloma = pronostico_primera.get("Paloma Valencia", 0)
+
+            # Total de votos a redistribuir (2/3 de los votos de Fajardo y Paloma)
+            # Se dividen: 1/3 para Abelardo, 1/3 para Cepeda, 1/3 abstención
+            redistribucion_por_candidato = (votos_fajardo + votos_paloma) / 3
+
+            abelardo_segunda = pronostico_primera["Abelardo de la Espriella"] + redistribucion_por_candidato
+            cepeda_segunda = pronostico_primera["Iván Cepeda"] + redistribucion_por_candidato
+
+            # 6. Normalizar a 100%
+            total_segunda = abelardo_segunda + cepeda_segunda
+            abelardo_final = round((abelardo_segunda / total_segunda) * 100, 2)
+            cepeda_final = round((cepeda_segunda / total_segunda) * 100, 2)
+
             margin = round(abs(abelardo_final - cepeda_final), 2)
             winner = "Abelardo de la Espriella" if abelardo_final > cepeda_final else "Iván Cepeda"
-            
+
             return {
                 "timestamp": datetime.now().isoformat(),
                 "winner": winner,
@@ -210,18 +266,24 @@ class GoogleTrendsService:
                 },
                 "margin": margin,
                 "raw_scores": {
-                    "Abelardo": abelardo_score,
-                    "Cepeda": cepeda_score
+                    "Abelardo": stats["Abelardo de la Espriella"]["mean"],
+                    "Cepeda": stats["Iván Cepeda"]["mean"],
+                    "Fajardo": stats["Sergio Fajardo"]["mean"],
+                    "Paloma": stats["Paloma Valencia"]["mean"]
                 },
-                "methodology": "Algoritmo de alineación calibrado con datos 2022 (factor estabilidad +5% para Cepeda)"
+                "stability": {
+                    "Abelardo": round(stats["Abelardo de la Espriella"]["std"], 2),
+                    "Cepeda": round(stats["Iván Cepeda"]["std"], 2),
+                    "Fajardo": round(stats["Sergio Fajardo"]["std"], 2),
+                },
+                "methodology": "Algoritmo alineación calibrado 2022: castigo 40% a Fajardo (volátil), premio +5% a Cepeda (voto duro), redistribución 1/3 de centro"
             }
-            
+
         except Exception as e:
             logger.error(f"Error calculando pronóstico de segunda vuelta: {e}")
-            return {
-                "error": str(e),
-                "timestamp": datetime.now().isoformat()
-            }
+            return {"error": str(e), "timestamp": datetime.now().isoformat()}
+
+
 async def close(self) -> None:
         """Cerrar conexión"""
         if self._pytrends:

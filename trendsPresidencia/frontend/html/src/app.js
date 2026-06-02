@@ -1,6 +1,6 @@
 /**
  * trendsPresidencia — App principal
- * Funcionalidad: pronóstico segunda vuelta Abelardo vs Cepeda
+ * Solo pronóstico de segunda vuelta (Abelardo vs Cepeda)
  * Sin dependencias, vanilla JS
  */
 
@@ -8,6 +8,7 @@
 // STATE
 // ============================================
 
+let forecastData = null;
 let candidates = [];
 
 // ============================================
@@ -15,14 +16,14 @@ let candidates = [];
 // ============================================
 
 document.addEventListener('DOMContentLoaded', async () => {
+    await loadForecast();
     await loadCandidates();
-    await loadRunoffForecast();
-    renderMetricsGrid();
+    renderAll();
     setupEventListeners();
 });
 
 // ============================================
-// CONFIGURACIÓN
+// CONFIG
 // ============================================
 
 const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -33,97 +34,111 @@ const API_BASE_URL = window.location.hostname === 'localhost' || window.location
 // DATA LOADING
 // ============================================
 
+async function loadForecast() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/v1/runoff/forecast`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        forecastData = await response.json();
+
+        if (forecastData.error) {
+            console.warn('Error en pronóstico:', forecastData.error);
+            hideForecast();
+            return;
+        }
+
+        showForecast();
+        console.log('✅ Pronóstico cargado:', forecastData);
+    } catch (error) {
+        console.error('Error cargando pronóstico:', error);
+        hideForecast();
+    }
+}
+
 async function loadCandidates() {
     try {
         const response = await fetch(`${API_BASE_URL}/api/v1/candidates`);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
 
-        // Filtrar solo Abelardo y Cepeda
+        // Solo Abelardo y Cepeda
         candidates = data.candidates.filter(c =>
             c.name.includes('Abelardo') || c.name.includes('Cepeda')
         ).map(c => ({
             ...c,
-            id: c.id || c.name.toLowerCase().replace(/\s+/g, '-'),
             momentum: c.momentum || 0,
             change_24h: c.change_24h || 0,
             color: c.color || '#3b82f6',
-            sources: c.sources || { google_trends: 0, youtube: 0, sentiment: 0 }
+            sources: c.sources || { google_trends: 0 }
         }));
 
-        console.log(`✅ Cargados ${candidates.length} candidatos (segunda vuelta)`);
+        console.log(`✅ Cargados ${candidates.length} candidatos`);
     } catch (error) {
-        console.error('❌ Error cargando candidatos:', error);
+        console.error('Error cargando candidatos:', error);
         candidates = [];
     }
 }
 
 // ============================================
-// RUNOFF FORECAST
+// RENDERING
 // ============================================
 
-async function loadRunoffForecast() {
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/runoff/forecast`);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const forecast = await response.json();
+function renderAll() {
+    renderForecast();
+    renderMetrics();
+    renderTechInfo();
+}
 
-        if (forecast.error || !forecast.predictions) {
-            console.warn('⚠️ No hay pronóstico de segunda vuelta');
-            showError('No hay pronóstico disponible');
-            return;
-        }
+function renderForecast() {
+    if (!forecastData || !forecastData.predictions) return;
 
-        // Actualizar porcentajes
-        const abelardoPct = forecast.predictions['Abelardo de la Espriella'] || 0;
-        const cepedaPct = forecast.predictions['Iván Cepeda'] || 0;
+    const abelardo = forecastData.predictions['Abelardo de la Espriella'] || 0;
+    const cepeda = forecastData.predictions['Iván Cepeda'] || 0;
 
-        document.getElementById('abelardoPct').textContent = `${abelardoPct}%`;
-        document.getElementById('cepedaPct').textContent = `${cepedaPct}%`;
-        document.getElementById('abelardoBar').style.width = `${abelardoPct}%`;
-        document.getElementById('cepedaBar').style.width = `${cepedaPct}%`;
+    document.getElementById('abelardoPct').textContent = `${abelardo}%`;
+    document.getElementById('cepedaPct').textContent = `${cepeda}%`;
 
-        // Actualizar timestamp
-        if (forecast.timestamp) {
-            const date = new Date(forecast.timestamp);
-            document.getElementById('lastUpdate').textContent =
-                `Actualizado: ${date.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}`;
-        }
+    // Animar barras después de un pequeño delay
+    setTimeout(() => {
+        document.getElementById('abelardoBar').style.width = `${abelardo}%`;
+        document.getElementById('cepedaBar').style.width = `${cepeda}%`;
+    }, 100);
 
-        console.log('✅ Pronóstico cargado:', { abelardo: abelardoPct, cepeda: cepedaPct });
-    } catch (error) {
-        console.error('Error cargando pronóstico:', error);
-        showError('Error al cargar el pronóstico');
+    // Actualizar timestamp
+    if (forecastData.timestamp) {
+        const date = new Date(forecastData.timestamp);
+        document.getElementById('lastUpdate').textContent =
+            `Actualizado: ${date.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}`;
+    }
+
+    // Actualizar metodología
+    if (forecastData.methodology) {
+        document.getElementById('methodology').textContent = forecastData.methodology;
     }
 }
 
-// ============================================
-// RENDER METRICS GRID
-// ============================================
-
-function renderMetricsGrid() {
+function renderMetrics() {
     const grid = document.getElementById('metricsGrid');
     if (!grid) return;
 
     if (candidates.length === 0) {
-        grid.innerHTML = '<p style="color: var(--text-muted); text-align: center;">No hay datos disponibles</p>';
+        grid.innerHTML = '<p style="color: var(--text-muted); text-align: center; grid-column: 1/-1;">No hay datos disponibles</p>';
         return;
     }
 
-    grid.innerHTML = candidates.map(candidate => {
-        const changeClass = candidate.change_24h >= 0 ? 'change-positive' : 'change-negative';
-        const changeIcon = candidate.change_24h >= 0 ? '▲' : '▼';
-        const changeValue = Math.abs(candidate.change_24h).toFixed(1);
-        const color = candidate.color;
+    grid.innerHTML = candidates.map(c => {
+        const changeClass = c.change_24h >= 0 ? 'change-positive' : 'change-negative';
+        const changeIcon = c.change_24h >= 0 ? '▲' : '▼';
+        const changeValue = Math.abs(c.change_24h).toFixed(1);
+        const gt = c.sources?.google_trends || 0;
 
         return `
-            <div class="metric-card" style="--metric-color: ${color}">
+            <div class="metric-card" style="--metric-color: ${c.color}">
                 <div class="metric-header">
                     <div>
-                        <div class="metric-name">${candidate.name}</div>
-                        <div class="metric-party">${candidate.party}</div>
+                        <div class="metric-name">${c.name}</div>
+                        <div class="metric-party">${c.party}</div>
                     </div>
-                    <div class="metric-value" style="color: ${color}">${candidate.momentum.toFixed(1)}%</div>
+                    <div class="metric-value" style="color: ${c.color}">${c.momentum.toFixed(1)}%</div>
                 </div>
                 <div class="metric-details">
                     <div>
@@ -132,20 +147,50 @@ function renderMetricsGrid() {
                     </div>
                     <div>
                         <span>Google Trends:</span>
-                        <strong>${candidate.sources?.google_trends || 0}</strong>
-                    </div>
-                    <div>
-                        <span>YouTube:</span>
-                        <strong>${candidate.sources?.youtube || 0}</strong>
-                    </div>
-                    <div>
-                        <span>Sentimiento:</span>
-                        <strong>${(candidate.sources?.sentiment || 0).toFixed(1)}%</strong>
+                        <strong>${gt.toFixed(1)}</strong>
                     </div>
                 </div>
             </div>
         `;
     }).join('');
+}
+
+function renderTechInfo() {
+    const container = document.getElementById('techInfo');
+    if (!container || !forecastData) return;
+
+    let html = '<h3>🔧 Información Técnica</h3>';
+
+    if (forecastData.raw_scores) {
+        html += '<div class="stats-row">';
+        html += `<div class="stat-item">Abelardo GT: <code>${forecastData.raw_scores.Abelardo?.toFixed(1) || '--'}</code></div>`;
+        html += `<div class="stat-item">Cepeda GT: <code>${forecastData.raw_scores.Cepeda?.toFixed(1) || '--'}</code></div>`;
+        html += `<div class="stat-item">Fajardo GT: <code>${forecastData.raw_scores.Fajardo?.toFixed(1) || '--'}</code></div>`;
+        html += `<div class="stat-item">Paloma GT: <code>${forecastData.raw_scores.Paloma?.toFixed(1) || '--'}</code></div>`;
+        html += '</div>';
+    }
+
+    if (forecastData.stability) {
+        html += '<div class="stats-row" style="margin-top: 0.5rem;">';
+        html += `<div class="stat-item">Desviación Abelardo: <code>${forecastData.stability.Abelardo || '--'}</code></div>`;
+        html += `<div class="stat-item">Desviación Cepeda: <code>${forecastData.stability.Cepeda || '--'}</code></div>`;
+        html += `<div class="stat-item">Desviación Fajardo: <code>${forecastData.stability.Fajardo || '--'}</code></div>`;
+        html += '</div>';
+    }
+
+    if (forecastData.margin !== undefined) {
+        html += `<p style="margin-top: 1rem;"><strong>Margen:</strong> ${forecastData.margin}% | <strong>Ganador proyectado:</strong> ${forecastData.winner}</p>`;
+    }
+
+    container.innerHTML = html;
+}
+
+function showForecast() {
+    document.getElementById('runoffForecast').style.display = 'block';
+}
+
+function hideForecast() {
+    document.getElementById('runoffForecast').style.display = 'none';
 }
 
 // ============================================
@@ -185,11 +230,11 @@ function setupEventListeners() {
 // ============================================
 
 async function handleRefresh() {
-    const refreshBtn = document.querySelector('.refresh-btn');
-    if (!refreshBtn) return;
+    const btn = document.querySelector('.refresh-btn');
+    if (!btn) return;
 
-    refreshBtn.disabled = true;
-    refreshBtn.textContent = '🔄 Actualizando...';
+    btn.disabled = true;
+    btn.textContent = '🔄 Actualizando...';
 
     try {
         const response = await fetch('/api/v1/candidates/refresh', {
@@ -201,41 +246,30 @@ async function handleRefresh() {
 
         const data = await response.json();
 
-        // Recargar todo
+        // Recargar datos
+        forecastData = data.runoff_forecast || null;
         await loadCandidates();
-        await loadRunoffForecast();
-        renderMetricsGrid();
+        renderAll();
 
         showNotification('✅ Datos actualizados correctamente');
     } catch (error) {
         console.error('Error:', error);
         showNotification(`❌ Error: ${error.message}`, 'error');
     } finally {
-        refreshBtn.disabled = false;
-        refreshBtn.textContent = '🔄 Actualizar';
+        btn.disabled = false;
+        btn.textContent = '🔄 Actualizar';
     }
 }
 
 // ============================================
-// HELPERS
+// NOTIFICATIONS
 // ============================================
-
-function showError(message) {
-    const grid = document.getElementById('metricsGrid');
-    if (grid) {
-        grid.innerHTML = `
-            <div class="empty-state" style="grid-column: 1 / -1;">
-                <p style="color: var(--text-muted);">${message}</p>
-            </div>
-        `;
-    }
-}
 
 function showNotification(message, type = 'success') {
-    const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-    notification.textContent = message;
-    notification.style.cssText = `
+    const el = document.createElement('div');
+    el.className = `notification ${type}`;
+    el.textContent = message;
+    el.style.cssText = `
         position: fixed;
         top: 20px;
         right: 20px;
@@ -248,14 +282,13 @@ function showNotification(message, type = 'success') {
         animation: slideIn 0.3s ease;
         font-size: 0.9rem;
     `;
-
-    document.body.appendChild(notification);
+    document.body.appendChild(el);
 
     setTimeout(() => {
-        notification.style.animation = 'slideOut 0.3s ease';
-        setTimeout(() => notification.remove(), 300);
+        el.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => el.remove(), 300);
     }, 3000);
 }
 
-// Exponer funciones globales
+// Exponer funciones
 window.refreshAnalysis = handleRefresh;
