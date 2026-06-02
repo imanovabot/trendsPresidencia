@@ -33,7 +33,7 @@ class Settings(BaseSettings):
 
     # Auto Refresh
     auto_refresh_enabled: bool = Field(True, env="AUTO_REFRESH_ENABLED")
-    auto_refresh_interval_minutes: int = Field(30, env="AUTO_REFRESH_INTERVAL_MINUTES")
+    auto_refresh_interval_minutes: int = Field(360, env="AUTO_REFRESH_INTERVAL_MINUTES")  # 6 horas
 
     # API
     api_v1_str: str = Field("/api/v1", env="API_V1_STR")

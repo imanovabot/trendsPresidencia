@@ -711,3 +711,115 @@ body {
         font-size: 2rem;
     }
 }
+
+
+/* ============================================
+   RUNOFF FORECAST STYLES
+   ============================================ */
+
+.runoff-forecast {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.runoff-forecast h2 {
+    margin: 0 0 1rem 0;
+    font-size: 1.5rem;
+    color: var(--text-primary);
+    text-align: center;
+}
+
+.forecast-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    margin: 1rem 0;
+}
+
+.forecast-candidate {
+    flex: 1;
+    text-align: center;
+}
+
+.forecast-candidate .candidate-name {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.forecast-candidate .candidate-party {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+}
+
+.forecast-candidate .candidate-percentage {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+}
+
+.forecast-bar {
+    height: 12px;
+    background: var(--border-color);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.forecast-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #8b5cf6, #3b82f6);
+    transition: width 0.5s ease;
+    border-radius: 6px;
+}
+
+#forecastCepeda .forecast-bar-fill {
+    background: linear-gradient(90deg, #ef4444, #f97316);
+}
+
+.forecast-vs {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    padding: 0 1rem;
+}
+
+.forecast-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-color);
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.forecast-methodology {
+    text-align: right;
+    max-width: 60%;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .forecast-content {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .forecast-vs {
+        padding: 0;
+    }
+    
+    .forecast-candidate .candidate-percentage {
+        font-size: 2rem;
+    }
+}
+

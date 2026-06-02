@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     initUI();
     renderList();
     setupEventListeners();
+    await loadRunoffForecast();
 });
 
 // ============================================
@@ -94,6 +95,58 @@ function initUI() {
     // Set initial category
     currentCategory = 'Todos';
     categoryFilter.value = 'Todos';
+}
+
+
+// ============================================
+// RUNOFF FORECAST
+// ============================================
+
+async function loadRunoffForecast() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/v1/runoff/forecast`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const forecast = await response.json();
+        
+        if (forecast.error || !forecast.predictions) {
+            console.warn('⚠️ No hay pronóstico de segunda vuelta disponible');
+            document.getElementById('runoffForecast').style.display = 'none';
+            return;
+        }
+        
+        // Mostrar sección
+        const section = document.getElementById('runoffForecast');
+        section.style.display = 'block';
+        
+        // Actualizar datos
+        const abelardoPct = forecast.predictions['Abelardo de la Espriella'] || 0;
+        const cepedaPct = forecast.predictions['Iván Cepeda'] || 0;
+        
+        document.getElementById('forecastAbelardoPct').textContent = `${abelardoPct}%`;
+        document.getElementById('forecastCepedaPct').textContent = `${cepedaPct}%`;
+        
+        // Actualizar barras
+        document.getElementById('forecastAbelardoBar').style.width = `${abelardoPct}%`;
+        document.getElementById('forecastCepedaBar').style.width = `${cepedaPct}%`;
+        
+        // Actualizar timestamp
+        if (forecast.timestamp) {
+            const date = new Date(forecast.timestamp);
+            document.getElementById('forecastTimestamp').textContent = 
+                `Actualizado: ${date.toLocaleTimeString('es-CO')}`;
+        }
+        
+        // Actualizar metodología
+        if (forecast.methodology) {
+            document.getElementById('forecastMethodology').textContent = forecast.methodology;
+        }
+        
+        console.log('✅ Pronóstico de segunda vuelta cargado:', forecast);
+        
+    } catch (error) {
+        console.error('Error cargando pronóstico de segunda vuelta:', error);
+        document.getElementById('runoffForecast').style.display = 'none';
+    }
 }
 
 // ============================================
