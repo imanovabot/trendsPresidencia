@@ -16,6 +16,39 @@ from services.prediction_engine import calculate_electoral_prediction, Candidate
 
 logger = logging.getLogger(__name__)
 
+
+def format_electoral_result(data: dict) -> str:
+    """Formatea el resultado electoral para Telegram/notificaciones"""
+    timestamp = datetime.fromisoformat(data['timestamp']).strftime('%Y-%m-%d %H:%M:%S')
+    predictions = data.get('predictions', {})
+    winner = data.get('winner', '')
+    
+    # Ordenar por porcentaje descendente
+    sorted_candidates = sorted(predictions.items(), key=lambda x: x[1], reverse=True)
+    
+    lines = [
+        "🔮 Resultado Proyectado - Análisis Cada 6 Horas",
+        "",
+        timestamp,
+        ""
+    ]
+    
+    # Determinar emoji para cada candidato
+    for i, (candidate, pct) in enumerate(sorted_candidates):
+        is_winner = (candidate == winner)
+        emoji = "🥇" if is_winner else "  "
+        
+        # Crear barra de progreso (20 caracteres)
+        bar_length = 20
+        filled = int(bar_length * pct / 100)
+        bar = "█" * filled + "░" * (bar_length - filled)
+        
+        lines.append(f"{candidate} {emoji} {pct:>5.1f}%  {bar}")
+    
+    return "\n".join(lines)
+
+
+
 router = APIRouter()
 
 # Inicializar servicio
@@ -110,7 +143,12 @@ async def get_electoral_analysis():
 
 
 @router.get("/analysis/electoral/simple")
-async def get_simple_prediction():
+async def get_simple_prediction(format: str = "json"):
+    """
+    Endpoint simple que devuelve solo el pronóstico final.
+    Consulta Google Trends en tiempo real y aplica algoritmo de alineación.
+    Formatos: json (default), telegram (texto formateado)
+    """
     """
     Endpoint simple que devuelve solo el pronóstico final.
     Consulta Google Trends en tiempo real y aplica algoritmo de alineación.
@@ -191,9 +229,8 @@ async def get_simple_prediction():
             predictions = prediction.get("first_round", {})
 
         margin = round(max(predictions.values()) - min(predictions.values()), 1) if len(predictions) == 2 else 0
-        winner = max(predictions, key=predictions.get) if predictions else ""
-
-        return {
+        winner = max(predictions, key=predictions.get) if predictions else ""# Preparar datos para respuesta
+        result_data = {
             "timestamp": datetime.now().isoformat(),
             "winner": winner,
             "predictions": predictions,
@@ -202,6 +239,12 @@ async def get_simple_prediction():
             "stability": stability_scores,
             "methodology": "Algoritmo de alineación calibrado con datos 2022 (factor estabilidad +5%)"
         }
+        
+        # Devolver según formato solicitado
+        if format.lower() == "telegram":
+            return format_electoral_result(result_data)
+        else:
+            return result_data
 
     except Exception as e:
         logger.error(f"Error en /analysis/electoral/simple: {e}", exc_info=True)
