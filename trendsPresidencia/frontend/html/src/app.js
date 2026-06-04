@@ -1,6 +1,6 @@
 /**
  * trendsPresidencia — App principal
- * Funcionalidad: búsqueda, filtrado, detalle de candidatos
+ * Solo pronóstico de segunda vuelta (Abelardo vs Cepeda)
  * Sin dependencias, vanilla JS
  */
 
@@ -8,24 +8,22 @@
 // STATE
 // ============================================
 
-let allCandidates = [];
-let filteredCandidates = [];
-let selectedCandidateId = null;
-let currentCategory = 'Todos';
+let forecastData = null;
+let candidates = [];
 
 // ============================================
 // INIT
 // ============================================
 
 document.addEventListener('DOMContentLoaded', async () => {
-    await loadData();
-    initUI();
-    renderList();
+    await loadForecast();
+    await loadCandidates();
+    renderAll();
     setupEventListeners();
 });
 
 // ============================================
-// CONFIGURACIÓN
+// CONFIG
 // ============================================
 
 const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -36,64 +34,163 @@ const API_BASE_URL = window.location.hostname === 'localhost' || window.location
 // DATA LOADING
 // ============================================
 
-async function loadData() {
+async function loadForecast() {
     try {
-        // Intentar cargar desde API primero
+        const response = await fetch(`${API_BASE_URL}/api/v1/runoff/forecast`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        forecastData = await response.json();
+
+        if (forecastData.error) {
+            console.warn('Error en pronóstico:', forecastData.error);
+            hideForecast();
+            return;
+        }
+
+        showForecast();
+        console.log('✅ Pronóstico cargado:', forecastData);
+    } catch (error) {
+        console.error('Error cargando pronóstico:', error);
+        hideForecast();
+    }
+}
+
+async function loadCandidates() {
+    try {
         const response = await fetch(`${API_BASE_URL}/api/v1/candidates`);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
-        allCandidates = data.candidates.map((c, idx) => ({
+
+        // Solo Abelardo y Cepeda
+        candidates = data.candidates.filter(c =>
+            c.name.includes('Abelardo') || c.name.includes('Cepeda')
+        ).map(c => ({
             ...c,
-            id: c.id || c.name.toLowerCase().replace(/\s+/g, '-'),
+            momentum: c.momentum || 0,
             change_24h: c.change_24h || 0,
-            color: c.color || '#3b82f6'
+            color: c.color || '#3b82f6',
+            sources: c.sources || { google_trends: 0 }
         }));
-        filteredCandidates = [...allCandidates];
 
-        // Actualizar última actualización
-        const updateFreqEl = document.getElementById('updateFreq');
-        if (updateFreqEl) updateFreqEl.textContent = '6h';
-
-        console.log(`✅ Cargados ${allCandidates.length} candidatos desde API`);
+        console.log(`✅ Cargados ${candidates.length} candidatos`);
     } catch (error) {
-        console.warn('⚠️ API no disponible, cargando datos estáticos:', error.message);
-        // Fallback a JSON estático
-        try {
-            const response = await fetch('data/candidates.json');
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const data = await response.json();
-            allCandidates = data.candidates;
-            filteredCandidates = [...allCandidates];
-            console.log(`✅ Cargados ${allCandidates.length} candidatos desde JSON estático`);
-        } catch (fallbackError) {
-            console.error('❌ Error cargando datos estáticos:', fallbackError);
-            showError('No se pudieron cargar los datos. Verifica la conexión.');
-        }
+        console.error('Error cargando candidatos:', error);
+        candidates = [];
     }
 }
 
 // ============================================
-// UI INITIALIZATION
+// RENDERING
 // ============================================
 
-function initUI() {
-    const categoryFilter = document.getElementById('categoryFilter');
-    if (!categoryFilter) return;
+function renderAll() {
+    renderForecast();
+    renderMetrics();
+    renderTechInfo();
+}
 
-    // Obtener categorías únicas desde los datos
-    const categories = ['Todos'];
-    allCandidates.forEach(c => {
-        if (!categories.includes(c.party)) categories.push(c.party);
-    });
+function renderForecast() {
+    if (!forecastData || !forecastData.predictions) return;
 
-    // Populate select
-    categoryFilter.innerHTML = categories
-        .map(cat => `<option value="${cat}">${cat}</option>`)
-        .join('');
+    const abelardo = forecastData.predictions['Abelardo de la Espriella'] || 0;
+    const cepeda = forecastData.predictions['Iván Cepeda'] || 0;
 
-    // Set initial category
-    currentCategory = 'Todos';
-    categoryFilter.value = 'Todos';
+    document.getElementById('abelardoPct').textContent = `${abelardo}%`;
+    document.getElementById('cepedaPct').textContent = `${cepeda}%`;
+
+    // Animar barras después de un pequeño delay
+    setTimeout(() => {
+        document.getElementById('abelardoBar').style.width = `${abelardo}%`;
+        document.getElementById('cepedaBar').style.width = `${cepeda}%`;
+    }, 100);
+
+    // Actualizar timestamp
+    if (forecastData.timestamp) {
+        const date = new Date(forecastData.timestamp);
+        document.getElementById('lastUpdate').textContent =
+            `Actualizado: ${date.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}`;
+    }
+
+    // Actualizar metodología
+    if (forecastData.methodology) {
+        document.getElementById('methodology').textContent = forecastData.methodology;
+    }
+}
+
+function renderMetrics() {
+    const grid = document.getElementById('metricsGrid');
+    if (!grid) return;
+
+    if (candidates.length === 0) {
+        grid.innerHTML = '<p style="color: var(--text-muted); text-align: center; grid-column: 1/-1;">No hay datos disponibles</p>';
+        return;
+    }
+
+    grid.innerHTML = candidates.map(c => {
+        const changeClass = c.change_24h >= 0 ? 'change-positive' : 'change-negative';
+        const changeIcon = c.change_24h >= 0 ? '▲' : '▼';
+        const changeValue = Math.abs(c.change_24h).toFixed(1);
+        const gt = c.sources?.google_trends || 0;
+
+        return `
+            <div class="metric-card" style="--metric-color: ${c.color}">
+                <div class="metric-header">
+                    <div>
+                        <div class="metric-name">${c.name}</div>
+                        <div class="metric-party">${c.party}</div>
+                    </div>
+                    <div class="metric-value" style="color: ${c.color}">${c.momentum.toFixed(1)}%</div>
+                </div>
+                <div class="metric-details">
+                    <div>
+                        <span>Cambio 24h:</span>
+                        <strong class="${changeClass}">${changeIcon} ${changeValue}%</strong>
+                    </div>
+                    <div>
+                        <span>Google Trends:</span>
+                        <strong>${gt.toFixed(1)}</strong>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderTechInfo() {
+    const container = document.getElementById('techInfo');
+    if (!container || !forecastData) return;
+
+    let html = '<h3>🔧 Información Técnica</h3>';
+
+    if (forecastData.raw_scores) {
+        html += '<div class="stats-row">';
+        html += `<div class="stat-item">Abelardo GT: <code>${forecastData.raw_scores.Abelardo?.toFixed(1) || '--'}</code></div>`;
+        html += `<div class="stat-item">Cepeda GT: <code>${forecastData.raw_scores.Cepeda?.toFixed(1) || '--'}</code></div>`;
+        html += `<div class="stat-item">Fajardo GT: <code>${forecastData.raw_scores.Fajardo?.toFixed(1) || '--'}</code></div>`;
+        html += `<div class="stat-item">Paloma GT: <code>${forecastData.raw_scores.Paloma?.toFixed(1) || '--'}</code></div>`;
+        html += '</div>';
+    }
+
+    if (forecastData.stability) {
+        html += '<div class="stats-row" style="margin-top: 0.5rem;">';
+        html += `<div class="stat-item">Desviación Abelardo: <code>${forecastData.stability.Abelardo || '--'}</code></div>`;
+        html += `<div class="stat-item">Desviación Cepeda: <code>${forecastData.stability.Cepeda || '--'}</code></div>`;
+        html += `<div class="stat-item">Desviación Fajardo: <code>${forecastData.stability.Fajardo || '--'}</code></div>`;
+        html += '</div>';
+    }
+
+    if (forecastData.margin !== undefined) {
+        html += `<p style="margin-top: 1rem;"><strong>Margen:</strong> ${forecastData.margin}% | <strong>Ganador proyectado:</strong> ${forecastData.winner}</p>`;
+    }
+
+    container.innerHTML = html;
+}
+
+function showForecast() {
+    document.getElementById('runoffForecast').style.display = 'block';
+}
+
+function hideForecast() {
+    document.getElementById('runoffForecast').style.display = 'none';
 }
 
 // ============================================
@@ -101,25 +198,11 @@ function initUI() {
 // ============================================
 
 function setupEventListeners() {
-    // Search input (debounced)
-    const searchInput = document.getElementById('searchInput');
-    let debounceTimer;
-    searchInput.addEventListener('input', (e) => {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-            filterCandidates(e.target.value, currentCategory);
-        }, 200);
-    });
+    const refreshBtn = document.querySelector('.refresh-btn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', handleRefresh);
+    }
 
-    // Category filter
-    const categoryFilter = document.getElementById('categoryFilter');
-    categoryFilter.addEventListener('change', (e) => {
-        currentCategory = e.target.value;
-        const searchValue = document.getElementById('searchInput').value;
-        filterCandidates(searchValue, currentCategory);
-    });
-
-    // Methodology modal
     const modal = document.getElementById('methodologyModal');
     const link = document.getElementById('methodologyLink');
     const closeBtn = document.getElementById('closeModal');
@@ -140,71 +223,53 @@ function setupEventListeners() {
             if (e.target === modal) modal.close();
         });
     }
-
-    // Refresh button
-    const refreshBtn = document.getElementById('refreshBtn');
-    if (refreshBtn) {
-        refreshBtn.addEventListener('click', handleRefresh);
-    }
 }
 
 // ============================================
-// REFRESH FUNCTIONALITY
+// REFRESH
 // ============================================
 
 async function handleRefresh() {
-    const refreshBtn = document.getElementById('refreshBtn');
-    if (!refreshBtn) return;
+    const btn = document.querySelector('.refresh-btn');
+    if (!btn) return;
 
-    // Disable button and show loading state
-    refreshBtn.disabled = true;
-    refreshBtn.classList.add('loading');
-    refreshBtn.textContent = '🔄 Actualizando...';
+    btn.disabled = true;
+    btn.textContent = '🔄 Actualizando...';
 
     try {
-        // Llamar al endpoint de refresh del backend
         const response = await fetch('/api/v1/candidates/refresh', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' }
         });
 
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
         const data = await response.json();
 
-        // Recargar datos después del refresh exitoso
-        await loadData();
-        renderList();
+        // Recargar datos
+        forecastData = data.runoff_forecast || null;
+        await loadCandidates();
+        renderAll();
 
-        // Mostrar notificación de éxito
-        showNotification(`✅ Datos actualizados: ${data.refreshed} candidatos`);
-
-        // Actualizar timestamp si existe
-        const updateTimeEl = document.getElementById('updateTime');
-        if (updateTimeEl) {
-            updateTimeEl.textContent = new Date().toLocaleTimeString('es-CO');
-        }
+        showNotification('✅ Datos actualizados correctamente');
     } catch (error) {
-        console.error('Error refrescando datos:', error);
+        console.error('Error:', error);
         showNotification(`❌ Error: ${error.message}`, 'error');
     } finally {
-        // Restore button state
-        refreshBtn.disabled = false;
-        refreshBtn.classList.remove('loading');
-        refreshBtn.textContent = '🔄 Refrescar';
+        btn.disabled = false;
+        btn.textContent = '🔄 Actualizar';
     }
 }
 
+// ============================================
+// NOTIFICATIONS
+// ============================================
+
 function showNotification(message, type = 'success') {
-    // Crear notificación temporal
-    const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-    notification.textContent = message;
-    notification.style.cssText = `
+    const el = document.createElement('div');
+    el.className = `notification ${type}`;
+    el.textContent = message;
+    el.style.cssText = `
         position: fixed;
         top: 20px;
         right: 20px;
@@ -215,238 +280,15 @@ function showNotification(message, type = 'success') {
         box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         z-index: 2000;
         animation: slideIn 0.3s ease;
+        font-size: 0.9rem;
     `;
+    document.body.appendChild(el);
 
-    document.body.appendChild(notification);
-
-    // Remover después de 3 segundos
     setTimeout(() => {
-        notification.style.animation = 'slideOut 0.3s ease';
-        setTimeout(() => notification.remove(), 300);
+        el.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => el.remove(), 300);
     }, 3000);
 }
 
-// ============================================
-// FILTERING LOGIC
-// ============================================
-
-function filterCandidates(searchQuery, category) {
-    const query = searchQuery.toLowerCase().trim();
-
-    filteredCandidates = allCandidates.filter(candidate => {
-        // Category filter
-        const matchesCategory = category === 'Todos' || candidate.party === category;
-
-        // Search filter (name, party, description)
-        const matchesSearch = !query ||
-            candidate.name.toLowerCase().includes(query) ||
-            candidate.party.toLowerCase().includes(query) ||
-            candidate.description.toLowerCase().includes(query);
-
-        return matchesCategory && matchesSearch;
-    });
-
-    renderList();
-}
-
-// ============================================
-// RENDERING
-// ============================================
-
-function renderList() {
-    const listContainer = document.getElementById('candidateList');
-    const statsEl = document.getElementById('resultStats');
-
-    if (!listContainer) return;
-
-    // Update stats
-    statsEl.textContent = `Mostrando ${filteredCandidates.length} candidato${filteredCandidates.length !== 1 ? 's' : ''}`;
-
-    // Clear list
-    listContainer.innerHTML = '';
-
-    if (filteredCandidates.length === 0) {
-        listContainer.innerHTML = `
-            <div class="empty-state" style="grid-column: 1 / -1; padding: 3rem;">
-                <div class="empty-icon">🔍</div>
-                <h3>No se encontraron candidatos</h3>
-                <p>Intenta con otros términos de búsqueda o ajusta el filtro de categoría.</p>
-            </div>
-        `;
-        return;
-    }
-
-    // Render each candidate card
-    filteredCandidates.forEach(candidate => {
-        const card = document.createElement('div');
-        card.className = `candidate-card ${selectedCandidateId === candidate.id ? 'active' : ''}`;
-        card.onclick = () => selectCandidate(candidate.id);
-
-        const changeClass = candidate.change_24h >= 0 ? 'change-positive' : 'change-negative';
-        const changeIcon = candidate.change_24h >= 0 ? '▲' : '▼';
-        const changeValue = Math.abs(candidate.change_24h).toFixed(1);
-
-        card.innerHTML = `
-            <div class="candidate-info">
-                <div class="candidate-name">${candidate.name}</div>
-                <div class="candidate-party">${candidate.party}</div>
-            </div>
-            <div class="candidate-metrics">
-                <div class="momentum-badge" style="color: ${candidate.color}">
-                    ${candidate.momentum.toFixed(1)}%
-                </div>
-                <div class="change-indicator ${changeClass}">
-                    ${changeIcon} ${changeValue}% (24h)
-                </div>
-                <div class="source-bars">
-                    <div class="source-bar trends" title="Google Trends: ${candidate.sources?.google_trends || 0}"></div>
-                    <div class="source-bar youtube" title="YouTube: ${candidate.sources?.youtube || 0}"></div>
-                    <div class="source-bar sentiment" title="Sentimiento: ${candidate.sources?.sentiment || 0}"></div>
-                </div>
-            </div>
-        `;
-
-        listContainer.appendChild(card);
-    });
-}
-
-// ============================================
-// CANDIDATE SELECTION & DETAIL
-// ============================================
-
-function selectCandidate(candidateId) {
-    selectedCandidateId = candidateId;
-    renderList(); // Re-render to update active state
-
-    const candidate = allCandidates.find(c => c.id === candidateId);
-    if (!candidate) return;
-
-    renderDetail(candidate);
-}
-
-function renderDetail(candidate) {
-    const emptyState = document.getElementById('emptyState');
-    const detailPanel = document.getElementById('candidateDetail');
-
-    emptyState.style.display = 'none';
-    detailPanel.style.display = 'block';
-
-    const changeClass = candidate.change_24h >= 0 ? 'momentum-up' : 'momentum-down';
-    const changeIcon = candidate.change_24h >= 0 ? '▲' : '▼';
-    const changeValue = Math.abs(candidate.change_24h).toFixed(1);
-
-    // Normalize source values for bars (0-100 scale assumed)
-    const maxVal = 100;
-    const trendsPct = (candidate.sources.google_trends / maxVal) * 100;
-    const ytPct = (candidate.sources.youtube / maxVal) * 100;
-    const sentPct = candidate.sources.sentiment; // Ya está en porcentaje 0-100
-
-    // Sentiment breakdown
-    const sentimentData = candidate.sentiment_breakdown || { positive: 0, neutral: 0, negative: 0 };
-    const { positive, neutral, negative } = sentimentData;
-    const total = positive + neutral + negative;
-
-    detailPanel.innerHTML = `
-        <div class="detail-header">
-            <div class="detail-title">
-                <h2>${candidate.name}</h2>
-                <div class="detail-party">${candidate.party}</div>
-            </div>
-            <div class="detail-momentum">
-                <span class="value" style="color: ${candidate.color}">
-                    ${candidate.momentum.toFixed(1)}%
-                </span>
-                <div class="change ${changeClass}">
-                    ${changeIcon} ${changeValue}% (24h)
-                </div>
-            </div>
-        </div>
-
-        <div class="sources-section">
-            <h3>Desglose por Fuente</h3>
-            <div class="sources-grid">
-                <div class="source-item">
-                    <div class="source-label">Google Trends</div>
-                    <div class="source-value" style="color: #8b5cf6">${candidate.sources.google_trends}</div>
-                    <div class="source-bar-container">
-                        <div class="source-bar-fill trends" style="width: ${trendsPct}%"></div>
-                    </div>
-                </div>
-                <div class="source-item">
-                    <div class="source-label">YouTube</div>
-                    <div class="source-value" style="color: #ef4444">${candidate.sources.youtube}</div>
-                    <div class="source-bar-container">
-                        <div class="source-bar-fill youtube" style="width: ${ytPct}%"></div>
-                    </div>
-                </div>
-                <div class="source-item">
-                    <div class="source-label">Sentimiento</div>
-                    <div class="source-value" style="color: #3b82f6">${candidate.sources.sentiment.toFixed(1)}%</div>
-                    <div class="source-bar-container">
-                        <div class="source-bar-fill sentiment" style="width: ${sentPct}%"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="sentiment-section">
-            <h3>Distribución de Sentimiento</h3>
-            <div class="sentiment-bars">
-                <div class="sentiment-bar-row">
-                    <span class="sentiment-label">Positivo</span>
-                    <div class="sentiment-track">
-                        <div class="sentiment-fill positive" style="width: ${positive}%"></div>
-                    </div>
-                    <span class="sentiment-value">${positive}%</span>
-                </div>
-                <div class="sentiment-bar-row">
-                    <span class="sentiment-label">Neutral</span>
-                    <div class="sentiment-track">
-                        <div class="sentiment-fill neutral" style="width: ${neutral}%"></div>
-                    </div>
-                    <span class="sentiment-value">${neutral}%</span>
-                </div>
-                <div class="sentiment-bar-row">
-                    <span class="sentiment-label">Negativo</span>
-                    <div class="sentiment-track">
-                        <div class="sentiment-fill negative" style="width: ${negative}%"></div>
-                    </div>
-                    <span class="sentiment-value">${negative}%</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="news-section">
-            <h3>📰 Noticias Relevantes</h3>
-            <div class="news-list">
-                ${candidate.top_news.map(news => `
-                    <div class="news-item">${news}</div>
-                `).join('')}
-            </div>
-        </div>
-
-        <div class="description-section">
-            <h3>📝 Resumen</h3>
-            <p style="color: var(--text-secondary); line-height: 1.6;">
-                ${candidate.description}
-            </p>
-        </div>
-    `;
-}
-
-// ============================================
-// ERROR HANDLING
-// ============================================
-
-function showError(message) {
-    const listContainer = document.getElementById('candidateList');
-    if (listContainer) {
-        listContainer.innerHTML = `
-            <div class="empty-state" style="grid-column: 1 / -1;">
-                <div class="empty-icon">⚠️</div>
-                <h3>Error</h3>
-                <p>${message}</p>
-            </div>
-        `;
-    }
-}
+// Exponer funciones
+window.refreshAnalysis = handleRefresh;

@@ -1,27 +1,20 @@
-"""API Principal de trendsPresidencia"""
+"""API Principal de trendsPresidencia - Solo Google Trends + Algoritmo de Alineación"""
 from __future__ import annotations
 
 import asyncio
 import json
 import logging
-import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 import httpx
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from config.settings import settings
 from services.google_trends import GoogleTrendsService
-from services.instagram_service import InstagramService
-from services.news_service import NewsService
-from services.sentiment_service import SentimentService
-from services.tiktok_service import TikTokService
-from services.x_service import XService
-from services.youtube_service import YouTubeService
 
 logger = logging.getLogger(__name__)
 
@@ -29,14 +22,8 @@ logger = logging.getLogger(__name__)
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 
-# Inicializar servicios
+# Inicializar servicio
 google_trends = GoogleTrendsService()
-instagram = InstagramService()
-tiktok = TikTokService()
-x_service = XService()
-youtube = YouTubeService()
-sentiment = SentimentService()
-news = NewsService()
 
 
 # ============================================
@@ -53,12 +40,12 @@ async def scheduled_refresh():
         try:
             interval = settings.auto_refresh_interval_minutes * 60
             await asyncio.sleep(interval)
-            logger.info(f"⏰ Iniciando refresco automático de datos (cada {settings.auto_refresh_interval_minutes} min)...")
+            logger.info(f"⏰ Iniciando refresco automático (cada {settings.auto_refresh_interval_minutes} min)...")
 
             # Cargar datos
             data_file = DATA_DIR / "candidates.json"
             if not data_file.exists():
-                logger.error("Archivo de candidatos no encontrado para refresh automático")
+                logger.error("Archivo de candidatos no encontrado")
                 continue
 
             with open(data_file) as f:
@@ -68,57 +55,33 @@ async def scheduled_refresh():
             candidate_names = [c["name"] for c in candidates]
             results = {}
 
-            # Refrescar cada fuente
+            # 1. Obtener datos de Google Trends para los 4 candidatos
             try:
                 trends_scores = await google_trends.get_trends_for_candidates(candidate_names)
                 for c in candidates:
-                    if c["name"] in trends_scores:
-                        c["sources"]["google_trends"] = trends_scores[c["name"]]
+                    c["sources"]["google_trends"] = trends_scores.get(c["name"], 0)
                 results["google_trends"] = "ok"
             except Exception as e:
-                logger.error(f"Error en refresh automático Google Trends: {e}")
+                logger.error(f"Error en refresh Google Trends: {e}")
                 results["google_trends"] = str(e)
 
-            try:
-                for c in candidates:
-                    yt_score = await youtube.calculate_youtube_score(c["name"])
-                    c["sources"]["youtube"] = yt_score
-                results["youtube"] = "ok"
-            except Exception as e:
-                logger.error(f"Error en refresh automático YouTube: {e}")
-                results["youtube"] = str(e)
-
-            try:
-                texts = [c.get("description", "") for c in candidates]
-                sentiments = await sentiment.batch_analyze(texts)
-                for c, sent in zip(candidates, sentiments):
-                    c["sources"]["sentiment"] = sent.get("positive", 0)
-                    c["sentiment_breakdown"] = sent
-                results["sentiment"] = "ok"
-            except Exception as e:
-                logger.error(f"Error en refresh automático Sentimiento: {e}")
-                results["sentiment"] = str(e)
-
-            # Recalcular momentum
-            weights = data.get("weights", {
-                "google_trends": 0.40,
-                "youtube": 0.30,
-                "sentiment": 0.30
-            })
+            # 2. Calcular momentum = Google Trends (sin pesos múltiples)
             for c in candidates:
-                c["momentum"] = round(
-                    c["sources"].get("google_trends", 0) * weights.get("google_trends", 0.4)
-                    + c["sources"].get("youtube", 0) * weights.get("youtube", 0.3)
-                    + c["sources"].get("tiktok", 0) * weights.get("tiktok", 0)
-                    + c["sources"].get("x", 0) * weights.get("x", 0)
-                    + c["sources"].get("instagram", 0) * weights.get("instagram", 0)
-                    + c["sources"].get("sentiment", 0) * weights.get("sentiment", 0.3),
-                    1,
-                )
+                c["momentum"] = round(c["sources"].get("google_trends", 0), 1)
 
+            # 3. Guardar actualización
             data["last_updated"] = datetime.now().isoformat()
             with open(data_file, "w") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
+
+            # 4. Calcular pronóstico de segunda vuelta y guardarlo
+            try:
+                runoff_forecast = await google_trends.get_runoff_forecast()
+                data["runoff_forecast"] = runoff_forecast
+                results["runoff_forecast"] = "ok" if "error" not in runoff_forecast else f"error: {runoff_forecast.get('error')}"
+            except Exception as e:
+                logger.error(f"Error calculando pronóstico de segunda vuelta: {e}")
+                results["runoff_forecast"] = f"error: {e}"
 
             logger.info(f"✅ Refresco automático completado: {results}")
 
@@ -141,8 +104,8 @@ class HealthCheck(BaseModel):
 def create_app() -> FastAPI:
     app = FastAPI(
         title=settings.project_name,
-        description="API de Momentum Digital para candidatos presidenciales Colombia 2026",
-        version="0.1.0",
+        description="API de Pronóstico Electoral - Solo Google Trends + Algoritmo de Alineación",
+        version="2.0.0",
         docs_url="/docs",
         redoc_url="/redoc",
     )
@@ -157,29 +120,21 @@ def create_app() -> FastAPI:
     )
 
     @app.get("/", response_model=dict[str, str])
-    async def root():
+    async def root() -> dict[str, str]:
         """Endpoint raíz"""
         return {
             "app": settings.project_name,
-            "version": "0.1.0",
+            "version": "2.0.0",
             "docs": "/docs",
             "health": "/health",
         }
 
     @app.get("/health", response_model=HealthCheck)
-    async def health_check():
-        """Verificar estado de la API y servicios"""
-        services_status = {
-            "google_trends": "ok",
-            "youtube": "ok" if settings.youtube_api_key else "configure_youtube_api_key",
-            "tiktok": "ok" if settings.tiktok_api_key else "configure_tiktok_api_key",
-            "x": "ok" if settings.x_bearer_token else "configure_x_bearer_token",
-            "instagram": "ok" if settings.instagram_access_token else "configure_instagram_token",
-            "sentiment": "ok",
-            "news": "ok",
-        }
+    async def health_check() -> HealthCheck:
+        """Verificar estado de la API"""
+        services_status = {"google_trends": "ok"}
 
-        # Verificar que servicios estén funcionando
+        # Verificar Google Trends
         try:
             await google_trends.get_trends_for_candidates(["test"])
         except Exception as e:
@@ -188,7 +143,7 @@ def create_app() -> FastAPI:
 
         return HealthCheck(
             status="healthy",
-            version="0.1.0",
+            version="2.0.0",
             timestamp=datetime.now().isoformat(),
             services=services_status,
         )
@@ -198,13 +153,10 @@ def create_app() -> FastAPI:
         category: str | None = None,
         search: str | None = None,
         refresh: bool = False,
-    ):
+    ) -> dict[str, Any]:
         """
-        Obtiene lista de candidatos con métricas actualizadas.
-
-        - **category**: Filtrar por partido (ej: 'Partido Conservador')
-        - **search**: Buscar por nombre, partido o descripción
-        - **refresh**: Forzar actualización de datos desde APIs
+        Obtiene lista de candidatos con métricas de Google Trends.
+        Solo incluye datos de Google Trends (sin YouTube, Sentimiento, etc.)
         """
         try:
             # Cargar datos base desde JSON
@@ -217,80 +169,23 @@ def create_app() -> FastAPI:
 
             candidates = data.get("candidates", [])
 
-            # Si se solicita refresh, consultar APIs reales
+            # Si se solicita refresh, consultar Google Trends
             if refresh:
-                logger.info("Refrescando datos desde APIs...")
+                logger.info("Refrescando datos desde Google Trends...")
                 candidate_names = [c["name"] for c in candidates]
 
-                # 1. Google Trends
                 try:
                     trends_scores = await google_trends.get_trends_for_candidates(candidate_names)
                     for c in candidates:
-                        c["sources"]["google_trends"] = trends_scores.get(c["name"], c["sources"]["google_trends"])
+                        c["sources"]["google_trends"] = trends_scores.get(c["name"], 0)
                 except Exception as e:
                     logger.error(f"Error refrescando Google Trends: {e}")
 
-                # 2. YouTube
-                try:
-                    for c in candidates:
-                        yt_score = await youtube.calculate_youtube_score(c["name"])
-                        c["sources"]["youtube"] = yt_score
-                except Exception as e:
-                    logger.error(f"Error refrescando YouTube: {e}")
-
-                # 3. TikTok (sin bots)
-                try:
-                    for c in candidates:
-                        tk_score = await tiktok.calculate_tiktok_score(c["name"])
-                        c["sources"]["tiktok"] = tk_score
-                except Exception as e:
-                    logger.error(f"Error refrescando TikTok: {e}")
-
-                # 4. X/Twitter (sin bots)
-                try:
-                    for c in candidates:
-                        x_score = await x_service.calculate_x_score(c["name"])
-                        c["sources"]["x"] = x_score
-                except Exception as e:
-                    logger.error(f"Error refrescando X: {e}")
-
-                # 5. Instagram (sin bots)
-                try:
-                    for c in candidates:
-                        ig_score = await instagram.calculate_instagram_score(c["name"])
-                        c["sources"]["instagram"] = ig_score
-                except Exception as e:
-                    logger.error(f"Error refrescando Instagram: {e}")
-
-                # 6. Sentiment (ejecutar en batch)
-                try:
-                    texts = [c.get("description", "") for c in candidates]
-                    sentiments = await sentiment.batch_analyze(texts)
-                    for c, sent in zip(candidates, sentiments):
-                        c["sources"]["sentiment"] = sent.get("positive", 0)  # Usar positivo como score principal
-                        c["sentiment_breakdown"] = sent
-                except Exception as e:
-                    logger.error(f"Error refrescando sentimiento: {e}")
-
-                # Recalcular momentum con pesos actualizados
-                # Pesos desde configuración (default si no está definida)
-                weights = data.get("weights", {
-                    "google_trends": 0.40,
-                    "youtube": 0.30,
-                    "sentiment": 0.30
-                })
+                # Calcular momentum = Google Trends directamente
                 for c in candidates:
-                    c["momentum"] = round(
-                        c["sources"].get("google_trends", 0) * weights.get("google_trends", 0.4)
-                        + c["sources"].get("youtube", 0) * weights.get("youtube", 0.3)
-                        + c["sources"].get("tiktok", 0) * weights.get("tiktok", 0)
-                        + c["sources"].get("x", 0) * weights.get("x", 0)
-                        + c["sources"].get("instagram", 0) * weights.get("instagram", 0)
-                        + c["sources"].get("sentiment", 0) * weights.get("sentiment", 0.3),
-                        1,
-                    )
+                    c["momentum"] = round(c["sources"].get("google_trends", 0), 1)
 
-                # Guardar actualización
+                # Guardar
                 data["last_updated"] = datetime.now().isoformat()
                 with open(data_file, "w") as f:
                     json.dump(data, f, indent=2, ensure_ascii=False)
@@ -322,7 +217,7 @@ def create_app() -> FastAPI:
             raise HTTPException(status_code=500, detail=str(e))
 
     @app.get("/api/v1/candidates/{candidate_id}", response_model=dict[str, Any])
-    async def get_candidate_detail(candidate_id: str):
+    async def get_candidate_detail(candidate_id: str) -> dict[str, Any]:
         """Obtiene detalle de un candidato específico"""
         try:
             data_file = DATA_DIR / "candidates.json"
@@ -333,204 +228,101 @@ def create_app() -> FastAPI:
             if not candidate:
                 raise HTTPException(status_code=404, detail="Candidato no encontrado")
 
-            # Obtener noticias relacionadas
-            try:
-                related_news = await news.search_news(candidate["name"], max_results=5)
-                candidate["recent_news"] = related_news
-            except Exception as e:
-                logger.error(f"Error obteniendo noticias: {e}")
-                candidate["recent_news"] = []
-
-            # Obtener videos de YouTube
-            try:
-                videos = await youtube.search_videos(candidate["name"], max_results=5)
-                candidate["recent_videos"] = videos
-            except Exception as e:
-                logger.error(f"Error obteniendo videos: {e}")
-                candidate["recent_videos"] = []
-
             return candidate
 
         except HTTPException:
             raise
         except Exception as e:
-            logger.error(f"Error en /candidates/{candidate_id}: {e}", exc_info=True)
+            logger.error(f"Error en /candidates/{candidate_id}: {e}")
             raise HTTPException(status_code=500, detail=str(e))
 
     @app.post("/api/v1/candidates/refresh", response_model=dict[str, Any])
-    async def refresh_candidates(request: MomentumRequest | None = None):
-        """
-        Fuerza actualización de datos desde APIs externas.
-        Actualiza todos los candidatos o solo los especificados.
-        """
+    async def refresh_candidates(background_tasks: BackgroundTasks) -> dict[str, Any]:
+        """Fuerza actualización inmediata de datos desde Google Trends"""
         try:
             data_file = DATA_DIR / "candidates.json"
             with open(data_file) as f:
                 data = json.load(f)
 
             candidates = data["candidates"]
-            names_to_refresh = [c["name"] for c in candidates]
+            candidate_names = [c["name"] for c in candidates]
 
-            if request and request.candidate_names:
-                names_to_refresh = request.candidate_names
-                candidates = [c for c in candidates if c["name"] in names_to_refresh]
-
-            results = {}
-
-            # Google Trends
-            try:
-                trends_scores = await google_trends.get_trends_for_candidates(names_to_refresh)
-                results["google_trends"] = trends_scores
-                for c in candidates:
-                    if c["name"] in trends_scores:
-                        c["sources"]["google_trends"] = trends_scores[c["name"]]
-            except Exception as e:
-                logger.error(f"Error en refresh Google Trends: {e}")
-                results["google_trends"] = {"error": str(e)}
-
-            # YouTube
-            try:
-                yt_scores = {}
-                for name in names_to_refresh:
-                    score = await youtube.calculate_youtube_score(name)
-                    yt_scores[name] = score
-                    for c in candidates:
-                        if c["name"] == name:
-                            c["sources"]["youtube"] = score
-                results["youtube"] = yt_scores
-            except Exception as e:
-                logger.error(f"Error en refresh YouTube: {e}")
-                results["youtube"] = {"error": str(e)}
-
-            # Sentiment
-            try:
-                texts = [c.get("description", "") for c in candidates]
-                sentiments = await sentiment.batch_analyze(texts)
-                sent_scores = {}
-                for c, sent in zip(candidates, sentiments):
-                    sent_scores[c["name"]] = sent
-                    c["sources"]["sentiment"] = sent.get("positive", 0)
-                    c["sentiment_breakdown"] = sent
-                results["sentiment"] = sent_scores
-            except Exception as e:
-                logger.error(f"Error en refresh sentiment: {e}")
-                results["sentiment"] = {"error": str(e)}
-
-            # Recalcular momentum con pesos desde configuración
-            weights = data.get("weights", {
-                "google_trends": 0.40,
-                "youtube": 0.30,
-                "sentiment": 0.30
-            })
+            # Obtener datos de Google Trends
+            trends_scores = await google_trends.get_trends_for_candidates(candidate_names)
             for c in candidates:
-                c["momentum"] = round(
-                    c["sources"].get("google_trends", 0) * weights.get("google_trends", 0.4)
-                    + c["sources"].get("youtube", 0) * weights.get("youtube", 0.3)
-                    + c["sources"].get("tiktok", 0) * weights.get("tiktok", 0)
-                    + c["sources"].get("x", 0) * weights.get("x", 0)
-                    + c["sources"].get("instagram", 0) * weights.get("instagram", 0)
-                    + c["sources"].get("sentiment", 0) * weights.get("sentiment", 0.3),
-                    1,
-                )
+                c["sources"]["google_trends"] = trends_scores.get(c["name"], 0)
 
+            # Calcular momentum
+            for c in candidates:
+                c["momentum"] = round(c["sources"].get("google_trends", 0), 1)
+
+            # Guardar
             data["last_updated"] = datetime.now().isoformat()
             with open(data_file, "w") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
 
+            # Calcular pronóstico de segunda vuelta
+            runoff_forecast = await google_trends.get_runoff_forecast()
+            data["runoff_forecast"] = runoff_forecast
+
+            with open(data_file, "w") as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+
             return {
+                "status": "ok",
                 "refreshed": len(candidates),
-                "candidates": [c["name"] for c in candidates],
-                "results": results,
                 "timestamp": datetime.now().isoformat(),
+                "runoff_forecast": runoff_forecast
             }
 
         except Exception as e:
             logger.error(f"Error en refresh: {e}", exc_info=True)
             raise HTTPException(status_code=500, detail=str(e))
 
-    @app.get("/api/v1/news", response_model=dict[str, Any])
-    async def get_news(
-        search: str | None = None,
-        max_results: int = 20,
-        candidate: str | None = None,
-    ):
+    @app.get("/api/v1/runoff/forecast", response_model=dict[str, Any])
+    async def get_runoff_forecast() -> dict[str, Any]:
         """
-        Obtiene noticias recientes.
-
-        - **search**: Buscar por término
-        - **candidate**: Filtrar por nombre de candidato
-        - **max_results**: Máximo de resultados (default 20)
+        Obtiene el pronóstico de segunda vuelta más reciente.
+        Usa el algoritmo de alineación calibrado con datos 2022.
         """
         try:
-            if candidate:
-                news_list = (await news.get_news_for_candidates([candidate])).get(candidate, [])
-            elif search:
-                news_list = await news.search_news(search, max_results=max_results)
-            else:
-                news_list = await news.fetch_news(max_entries=max_results)
-
-            return {
-                "news": news_list,
-                "total": len(news_list),
-                "sources": len(set(n["source"] for n in news_list)),
-            }
-
-        except Exception as e:
-            logger.error(f"Error en /news: {e}", exc_info=True)
-            raise HTTPException(status_code=500, detail=str(e))
-
-    @app.get("/api/v1/stats", response_model=dict[str, Any])
-    async def get_stats():
-        """Estadísticas generales del sistema"""
-        try:
+            # Intentar obtener del caché primero
             data_file = DATA_DIR / "candidates.json"
-            with open(data_file) as f:
-                data = json.load(f)
+            if data_file.exists():
+                with open(data_file) as f:
+                    data = json.load(f)
+                if "runoff_forecast" in data and "error" not in data["runoff_forecast"]:
+                    return data["runoff_forecast"]
 
-            candidates = data["candidates"]
-
-            # Calcular estadísticas
-            momentum_values = [c["momentum"] for c in candidates]
-            changes = [c["change_24h"] for c in candidates]
-
-            stats = {
-                "total_candidates": len(candidates),
-                "parties": list(set(c["party"] for c in candidates)),
-                "avg_momentum": round(sum(momentum_values) / len(momentum_values), 1) if momentum_values else 0,
-                "max_momentum": max(momentum_values) if momentum_values else 0,
-                "min_momentum": min(momentum_values) if momentum_values else 0,
-                "avg_change_24h": round(sum(changes) / len(changes), 1) if changes else 0,
-                "candidates_up": sum(1 for c in changes if c > 0),
-                "candidates_down": sum(1 for c in changes if c < 0),
-                "last_updated": data.get("last_updated"),
-                "update_frequency_hours": data.get("update_frequency_hours", 6),
-            }
-
-            return stats
+            # Si no hay caché, calcular en tiempo real
+            forecast = await google_trends.get_runoff_forecast()
+            return forecast
 
         except Exception as e:
-            logger.error(f"Error en /stats: {e}", exc_info=True)
+            logger.error(f"Error obteniendo pronóstico de segunda vuelta: {e}")
             raise HTTPException(status_code=500, detail=str(e))
 
+    @app.get("/api/v1/analysis/runoff", response_model=dict[str, Any])
+    async def get_runoff_analysis() -> dict[str, Any]:
+        """
+        Calcula pronóstico de segunda vuelta en tiempo real.
+        Incluye datos brutos, estabilidad y factores de ajuste.
+        """
+        try:
+            forecast = await google_trends.get_runoff_forecast()
+            if "error" in forecast:
+                raise HTTPException(status_code=500, detail=forecast["error"])
+            return forecast
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error en análisis de segunda vuelta: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    # Iniciar tarea de refresco automático en segundo plano
     @app.on_event("startup")
     async def startup_event():
-        """Inicializar servicios y tareas en segundo plano"""
-        logger.info("Iniciando trendsPresidencia API...")
-        logger.info(f"Configuración: {settings.model_dump()}")
-
-        # Iniciar tarea de refresco automático cada 30 minutos
-        asyncio.create_task(scheduled_refresh())
-        logger.info("✅ Tarea de refresco automático iniciada (cada 30 minutos)")
-
-    @app.on_event("shutdown")
-    async def shutdown_event():
-        """Cerrar recursos"""
-        await google_trends.close()
-        await youtube.close()
-        await sentiment.close()
+        background_tasks = asyncio.create_task(scheduled_refresh())
+        logger.info("🚀 trendsPresidencia API iniciada - Solo Google Trends + Algoritmo de Alineación")
 
     return app
-
-
-# Para ejecución directa: uvicorn main:app --reload
-app = create_app()
